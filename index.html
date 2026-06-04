@@ -18,7 +18,7 @@
             <hr class="divider">
 
             <section class="control-group">
-                <h2>Configuración</h2>
+                <h2>Configuración de Gases</h2>
                 
                 <div class="input-wrapper">
                     <div class="label-container">
@@ -31,16 +31,42 @@
                         <span>200</span>
                     </div>
                 </div>
+            </section>
+
+            <hr class="divider">
+
+            <section class="control-group">
+                <h2>Configuración del Entorno</h2>
+
+                <div class="input-wrapper">
+                    <label for="select-pared">Comportamiento de la pared</label>
+                    <select id="select-pared" class="custom-select">
+                        <option value="flexible" selected>Membrana Flexible (Globo)</option>
+                        <option value="fija">Pared Rígida (Fija)</option>
+                    </select>
+                </div>
+
+                <div id="wrapper-radio-manual" class="input-wrapper hidden">
+                    <label>Radio del Contenedor</label>
+                    <div class="stepper-container">
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <div class="stepper-display">
+                            <span id="input-radio-view">120</span>
+                            <span class="unit">px</span>
+                        </div>
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
+                    </div>
+                </div>
 
                 <div class="input-wrapper">
                     <label>Temperatura Objetivo</label>
                     <div class="stepper-container">
-                        <button id="btn-bajar" class="stepper-btn">-</button>
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperatura(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
                         <div class="stepper-display">
                             <span id="input-temp-view">0</span>
                             <span class="unit">K</span>
                         </div>
-                        <button id="btn-subir" class="stepper-btn">+</button>
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperatura(10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
                     </div>
                 </div>
             </section>
@@ -67,6 +93,40 @@
         </aside>
 
         <main class="simulation-panel">
+            <button id="menu-toggle-btn" class="toggle-btn" onclick="alternarMenuFlotante()">⚙ Visualización</button>
+            
+            <div id="floating-menu" class="floating-dropdown hidden">
+                <h3>Ajustes Visuales</h3>
+                
+                <div class="input-wrapper">
+                    <div class="label-container">
+                        <label>Tamaño partícula</label>
+                        <span id="size-val" class="value-badge">5 px</span>
+                    </div>
+                    <div id="size-slider-container"></div>
+                    <div class="slider-bounds">
+                        <span>1 px</span>
+                        <span>15 px</span>
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <label for="color-picker-particula">Color partículas</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color-picker-particula" class="custom-color-picker" value="#00c8ff">
+                        <span id="color-hex-val" class="color-text">#00C8FF</span>
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <label for="color-picker-circulo">Color contenedor</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color-picker-circulo" class="custom-color-picker" value="#ff4646">
+                        <span id="color-circulo-hex-val" class="color-text">#FF4646</span>
+                    </div>
+                </div>
+            </div>
+
             <div id="canvas-container"></div>
         </main>
     </div>

@@ -16,6 +16,7 @@ body {
     display: grid;
     grid-template-columns: 360px 1fr;
     height: 100vh;
+    width: 100vw;
 }
 
 /* Panel de Control Lateral */
@@ -25,8 +26,9 @@ body {
     padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     overflow-y: auto;
+    height: 100vh;
 }
 
 header h1 {
@@ -46,23 +48,23 @@ h2 {
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: #00c8ff;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
 }
 
 .control-group {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
 }
 
 .input-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 label {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #cdcdcd;
     font-weight: 500;
 }
@@ -80,15 +82,16 @@ label {
     border-radius: 4px;
     font-family: monospace;
     font-weight: bold;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
-/* Modificación del slider nativo inyectado por p5 */
-#particle-slider-container input {
+/* Deslizadores inyectados por p5 */
+#particle-slider-container input,
+#size-slider-container input {
     width: 100%;
     accent-color: #00c8ff;
     cursor: pointer;
-    margin: 8px 0;
+    margin: 4px 0;
 }
 
 .slider-bounds {
@@ -98,7 +101,24 @@ label {
     color: #666;
 }
 
-/* Selector paso a paso de Temperatura */
+/* Selectores Desplegables */
+.custom-select {
+    background-color: #252525;
+    border: 1px solid #2d2d2d;
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 100%;
+    outline: none;
+}
+
+.custom-select:focus {
+    border-color: #00c8ff;
+}
+
+/* Contenedores de botones (Steppers) */
 .stepper-container {
     display: flex;
     align-items: center;
@@ -134,7 +154,8 @@ label {
     height: 44px;
     border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.15s, transform 0.1s;
+    user-select: none;
+    transition: background-color 0.15s;
 }
 
 .stepper-btn:hover {
@@ -143,28 +164,27 @@ label {
 
 .stepper-btn:active {
     background-color: #00c8ff;
-    transform: scale(0.95);
 }
 
 .divider {
     border: 0;
     height: 1px;
     background: #2d2d2d;
-    margin: 8px 0;
+    margin: 4px 0;
 }
 
-/* Dashboard de métricas */
+/* Dashboard de Métricas */
 .dashboard {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .card {
     background-color: #252525;
     border: 1px solid #2d2d2d;
     border-radius: 8px;
-    padding: 14px;
+    padding: 12px 14px;
 }
 
 .card.Highlight {
@@ -176,11 +196,11 @@ label {
     color: #888;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .metric {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: #ffffff;
     font-family: monospace;
@@ -200,15 +220,118 @@ label {
     font-family: monospace;
 }
 
-/* Área de Simulación */
+/* Área de Simulación y Elementos Flotantes */
 .simulation-panel {
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #141414;
+    height: 100vh;
+    overflow: hidden;
+    position: relative; /* Clave para anclar los elementos absolutos */
+}
+
+/* Botón Desplegable */
+.toggle-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 11;
+    background-color: #1e1e1e;
+    border: 1px solid #3d3d3d;
+    color: #ffffff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.toggle-btn:hover {
+    background-color: #2d2d2d;
+    border-color: #00c8ff;
+}
+
+/* Menú Desplegable Flotante */
+.floating-dropdown {
+    position: absolute;
+    top: 74px;
+    right: 24px;
+    z-index: 10;
+    background-color: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    padding: 18px;
+    width: 240px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.floating-dropdown h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #00c8ff;
+    margin-bottom: 4px;
+}
+
+/* Selectores de Color */
+.color-picker-container {
+    display: flex;
+    align-items: center;
+    background-color: #252525;
+    border: 1px solid #2d2d2d;
+    padding: 6px 10px;
+    border-radius: 6px;
+    gap: 10px;
+}
+
+.custom-color-picker {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: none;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+}
+
+.custom-color-picker::-webkit-color-swatch {
+    border-radius: 4px;
+    border: 1px solid #444;
+}
+
+.custom-color-picker::-moz-color-swatch {
+    border-radius: 4px;
+    border: 1px solid #444;
+}
+
+.color-text {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #ffffff;
+}
+
+#canvas-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 #canvas-container canvas {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
     border-radius: 8px;
+    max-width: 90vh;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+.hidden {
+    display: none !important;
 }
