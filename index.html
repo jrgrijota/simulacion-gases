@@ -59,12 +59,22 @@
                 </div>
 
                 <div class="input-wrapper">
-                    <label>Temperatura Objetivo</label>
+                    <div class="label-container">
+                        <label>Temperatura Objetivo</label>
+                        <div class="scale-toggle">
+                            <span class="toggle-label">K</span>
+                            <label class="switch">
+                                <input type="checkbox" id="check-escala-temp">
+                                <span class="slider-toggle round"></span>
+                            </label>
+                            <span class="toggle-label">ºC</span>
+                        </div>
+                    </div>
                     <div class="stepper-container">
                         <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperatura(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
                         <div class="stepper-display">
-                            <span id="input-temp-view">0</span>
-                            <span class="unit">K</span>
+                            <span id="input-temp-view">273</span>
+                            <span id="unit-temp-view" class="unit">K</span>
                         </div>
                         <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperatura(10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
                     </div>
@@ -74,20 +84,41 @@
             <hr class="divider">
 
             <section class="control-group">
-                <h2>Monitorización</h2>
-                <div class="dashboard">
-                    <div class="card Highlight">
-                        <h3>Frecuencia de Impactos</h3>
-                        <div class="metric"><span id="metric-frecuencia">0</span> <small>choques/s</small></div>
-                    </div>
-                    <div class="card">
-                        <h3>Radio del Contenedor</h3>
-                        <div class="metric"><span id="metric-radio">100.0</span> <small>px</small></div>
-                    </div>
-                    <div class="card">
-                        <h3>Choques Totales acumulados</h3>
-                        <div class="metric-secondary"><span id="metric-totales">0</span></div>
-                    </div>
+                <h2>Panel de Análisis</h2>
+                <div class="dashboard-accordion-group">
+                    
+                    <details class="custom-details" open>
+                        <summary>Monitorización del Sistema</summary>
+                        <div class="details-content">
+                            <div class="card Highlight">
+                                <h3>Frecuencia de Impactos</h3>
+                                <div class="metric"><span id="metric-frecuencia">0</span> <small>choques/s</small></div>
+                            </div>
+                            <div class="card">
+                                <h3>Choques Totales</h3>
+                                <div class="metric-secondary"><span id="metric-totales">0</span></div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="custom-details" open>
+                        <summary>Datos Físicos (P y V)</summary>
+                        <div class="details-content">
+                            <div class="card">
+                                <h3>Presión Calculada (P)</h3>
+                                <div class="metric"><span id="metric-presion-fisica">0.00</span> <small>atm</small></div>
+                            </div>
+                            <div class="card">
+                                <h3>Volumen del Contenedor (V)</h3>
+                                <div class="metric"><span id="metric-volumen-fisico">0.00</span> <small>L</small></div>
+                            </div>
+                            <div class="card">
+                                <h3>Radio de la Pared (R)</h3>
+                                <div class="metric-secondary"><span id="metric-radio">120.0</span> px</div>
+                            </div>
+                        </div>
+                    </details>
+                    
                 </div>
             </section>
         </aside>
@@ -97,7 +128,6 @@
             
             <div id="floating-menu" class="floating-dropdown hidden">
                 <h3>Ajustes Visuales</h3>
-                
                 <div class="input-wrapper">
                     <div class="label-container">
                         <label>Tamaño partícula</label>
@@ -124,6 +154,11 @@
                         <input type="color" id="color-picker-circulo" class="custom-color-picker" value="#ff4646">
                         <span id="color-circulo-hex-val" class="color-text">#FF4646</span>
                     </div>
+                </div>
+                
+                <div class="input-wrapper checked-wrapper">
+                    <input type="checkbox" id="check-termografico" checked>
+                    <label for="check-termografico">Color según velocidad</label>
                 </div>
             </div>
 

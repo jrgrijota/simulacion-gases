@@ -22,32 +22,31 @@ let choquesEnEsteSegundo = 0;
 let choquesPorSegundo = 0;
 let ultimoTiempoMedido = 0; 
 
-// Variables globales de control térmico interno
-let temperaturaActualInt = 0;
-let temperaturaAnterior = 0; 
+// Inicialización termodinámica estricta a 273K
+let temperaturaActualInt = 273;
+let temperaturaAnterior = 273; 
 
 // Gestión del modo de pared
 let modoPared = 'flexible'; 
-
-// Variable global para controlar la repetición de los botones
 let temporizadorBoton = null;
 
+// Historial de puntos para la gráfica integrada
+let historialPuntos = []; 
+
 // Referencias de elementos HTML
-let sliderParticulas;
-let sliderTamaño;
-let pickerColor, elemColorHex;
-let pickerColorCirculo, elemColorCirculoHex;
-let elemTempView, elemRadioView, wrapperRadioManual, selectPared;
+let sliderParticulas, sliderTamaño, checkTermografico;
+let pickerColor, elemColorHex, pickerColorCirculo, elemColorCirculoHex;
+let elemTempView, elemUnidadView, checkEscalaTemp, elemRadioView, wrapperRadioManual, selectPared;
 let mFrecuencia, mRadio, mTotales, lblParticleVal, lblSizeVal;
+let mPresionFisica, mVolumenFisico;
 
 function setup() {
     let canvas = createCanvas(540, 540);
     canvas.parent('canvas-container');
     
-    centroX = width / 2;
-    centroY = height / 2;
+    centroX = width / 2 + 40;
+    centroY = height / 2 - 40;
     
-    // Inicializar deslizadores nativos en sus contenedores (Mínimo de tamaño configurado a 1 px)
     sliderParticulas = createSlider(1, 200, 50, 1);
     sliderParticulas.parent('particle-slider-container');
     
@@ -56,42 +55,53 @@ function setup() {
     
     // Mapear elementos del DOM
     elemTempView = select('#input-temp-view');
+    elemUnidadView = select('#unit-temp-view');
+    checkEscalaTemp = select('#check-escala-temp');
     elemRadioView = select('#input-radio-view');
     wrapperRadioManual = select('#wrapper-radio-manual');
     selectPared = select('#select-pared');
+    checkTermografico = select('#check-termografico');
     
     pickerColor = select('#color-picker-particula');
     elemColorHex = select('#color-hex-val');
-    
     pickerColorCirculo = select('#color-picker-circulo');
     elemColorCirculoHex = select('#color-circulo-hex-val');
     
     mFrecuencia = select('#metric-frecuencia');
     mRadio = select('#metric-radio');
     mTotales = select('#metric-totales');
+    mPresionFisica = select('#metric-presion-fisica');
+    mVolumenFisico = select('#metric-volumen-fisico');
     lblParticleVal = select('#particle-val');
     lblSizeVal = select('#size-val');
     
-    selectPared.changed(actualizarModoPared);
+    // Vinculación segura de listeners comprobando la existencia de los nodos
+    if (selectPared) selectPared.changed(actualizarModoPared);
+    if (checkEscalaTemp) checkEscalaTemp.changed(renderizarValorTemperatura); 
     
     ultimoTiempoMedido = millis();
+    
+    // Inicializar velocidades iniciales acordes a 273K
+    gestionarParticulas(sliderParticulas.value(), temperaturaActualInt);
 }
 
 function draw() {
     background(20); 
     
-    // Sincronización de variables desde la interfaz HTML
     let cantidadDeseada = sliderParticulas.value();
-    lblParticleVal.html(cantidadDeseada);
+    if (lblParticleVal) lblParticleVal.html(cantidadDeseada);
     
     radioParticula = sliderTamaño.value();
-    lblSizeVal.html(radioParticula + " px");
+    if (lblSizeVal) lblSizeVal.html(radioParticula + " px");
     
-    colorParticulaHex = pickerColor.value();
-    elemColorHex.html(colorParticulaHex.toUpperCase());
-    
-    colorCirculoHex = pickerColorCirculo.value();
-    elemColorCirculoHex.html(colorCirculoHex.toUpperCase());
+    if (pickerColor && elemColorHex) {
+        colorParticulaHex = pickerColor.value();
+        elemColorHex.html(colorParticulaHex.toUpperCase());
+    }
+    if (pickerColorCirculo && elemColorCirculoHex) {
+        colorCirculoHex = pickerColorCirculo.value();
+        elemColorCirculoHex.html(colorCirculoHex.toUpperCase());
+    }
     
     gestionarParticulas(cantidadDeseada, temperaturaActualInt);
     
@@ -99,14 +109,21 @@ function draw() {
         choquesPorSegundo = choquesEnEsteSegundo;
         choquesEnEsteSegundo = 0;
         ultimoTiempoMedido = millis();
+        
+        let volumenCalculado = PI * radioContenedor * radioContenedor;
+        historialPuntos.push({
+            v: map(volumenCalculado, PI*25*25, PI*220*220, 50, 200),
+            p: map(choquesPorSegundo, 0, 300, 500, 390)
+        });
+        
+        if (historialPuntos.length > 35) historialPuntos.shift();
     }
     
-    // Modificación de velocidad molecular
+    // Ajuste dinámico de vectores velocidad
     if (temperaturaActualInt !== temperaturaAnterior) {
         if (temperaturaActualInt === 0) {
             for (let i = 0; i < particulas.length; i++) {
-                particulas[i].vx = 0;
-                particulas[i].vy = 0;
+                particulas[i].vx = 0; particulas[i].vy = 0;
             }
         } else if (temperaturaAnterior === 0) {
             for (let i = 0; i < particulas.length; i++) {
@@ -125,12 +142,22 @@ function draw() {
         temperaturaAnterior = temperaturaActualInt;
     }
     
-    // Inyección de datos en la UI
-    mFrecuencia.html(choquesPorSegundo);
-    mRadio.html(nf(radioContenedor, 3, 1));
-    mTotales.html(totalChoques);
+    // Cálculos Termodinámicos
+    let volumenLitros = map(PI * radioContenedor * radioContenedor, PI*25*25, PI*220*220, 0.5, 5.0, true);
+    let perimetro = TWO_PI * radioContenedor;
+    let presionAtm = (choquesPorSegundo * 15) / perimetro;
+    if (temperaturaActualInt === 0) presionAtm = 0; 
     
-    // Dinámica según modo de pared
+    // Volcado seguro a la interfaz
+    if (mFrecuencia) mFrecuencia.html(choquesPorSegundo);
+    if (mRadio) mRadio.html(nf(radioContenedor, 3, 1));
+    if (mTotales) mTotales.html(totalChoques);
+    if (mPresionFisica) mPresionFisica.html(nf(presionAtm, 1, 2));
+    if (mVolumenFisico) mVolumenFisico.html(nf(volumenLitros, 1, 2));
+    
+    dibujarPlanoCartesiano();
+    
+    // Comportamiento elástico o rígido de la pared
     if (modoPared === 'flexible') {
         let fuerzaElastica = -kElastica * (radioContenedor - radioBase);
         let fuerzaAmortiguacion = -amortiguacion * velocidadRadio;
@@ -151,100 +178,150 @@ function draw() {
     
     impulsoAcumulado = 0; 
     
-    // Renderizado del Contenedor Circular con Color Dinámico (Solo en Flexible muta según impactos si se desea, aquí fijado por el Picker)
     if (modoPared === 'flexible') {
         stroke(color(colorCirculoHex));
     } else {
-        stroke(0, 200, 255); // Azul fijo en Modo Rígido para diferenciar comportamientos
+        stroke(0, 200, 255);
     }
     strokeWeight(2.5);
     noFill();
     circle(centroX, centroY, radioContenedor * 2);
     
-    // Actualización de posiciones y colisión con paredes
+    // Dinámica molecular
     for (let i = 0; i < particulas.length; i++) {
         let p = particulas[i];
-        p.x += p.vx;
-        p.y += p.vy;
+        p.x += p.vx; p.y += p.vy;
         comprobarParedes(p);
     }
     
     resolverChoquesParticulas();
     
-    // Renderizado de partículas con color dinámico
-    let colorP5 = color(colorParticulaHex);
+    // Renderizado cromático de las partículas
+    let colorFijo = color(colorParticulaHex);
+    let colorFrio = color(0, 100, 255); 
+    let colorCaliente = color(255, 50, 50); 
+    
     for (let i = 0; i < particulas.length; i++) {
         let p = particulas[i];
-        fill(colorP5);
+        if (checkTermografico && checkTermografico.checked()) {
+            let vInstantanea = sqrt(p.vx * p.vx + p.vy * p.vy);
+            let factorTermo = map(vInstantanea, 0, 6, 0, 1, true);
+            fill(lerpColor(colorFrio, colorCaliente, factorTermo));
+        } else {
+            fill(colorFijo);
+        }
         noStroke();
         circle(p.x, p.y, radioParticula * 2);
     }
 }
 
-// --- INTERFAZ DE USUARIO: DESPLEGABLE FLOTANTE ---
-
-function alternarMenuFlotante() {
-    let menu = select('#floating-menu');
-    if (menu.hasClass('hidden')) {
-        menu.removeClass('hidden');
-    } else {
-        menu.addClass('hidden');
+function dibujarPlanoCartesiano() {
+    fill(28, 28, 28);
+    stroke(45);
+    strokeWeight(1);
+    rect(20, 360, 200, 160, 6);
+    
+    stroke(120);
+    strokeWeight(1.5);
+    line(50, 380, 50, 500);  
+    line(50, 500, 200, 500); 
+    
+    noStroke();
+    fill(180);
+    textSize(11);
+    textAlign(CENTER, CENTER);
+    text("V", 208, 500);
+    text("P", 50, 370);
+    
+    textSize(9);
+    fill(100);
+    textAlign(LEFT);
+    text("GRÁFICA TERMODINÁMICA", 55, 392);
+    
+    noFill();
+    stroke(0, 200, 255);
+    strokeWeight(2);
+    beginShape();
+    for (let i = 0; i < historialPuntos.length; i++) {
+        let pt = historialPuntos[i];
+        vertex(constrain(pt.v, 50, 200), constrain(pt.p, 380, 500));
+    }
+    endShape();
+    
+    if (historialPuntos.length > 0) {
+        let ultimoPunto = historialPuntos[historialPuntos.length - 1];
+        fill(255, 200, 0);
+        noStroke();
+        circle(constrain(ultimoPunto.v, 50, 200), constrain(ultimoPunto.p, 380, 500), 7);
     }
 }
 
-// --- FUNCIONES DE ACCIÓN CONTINUA ---
+function alternarMenuFlotante() {
+    let menu = select('#floating-menu');
+    if (menu) {
+        if (menu.hasClass('hidden')) menu.removeClass('hidden');
+        else menu.addClass('hidden');
+    }
+}
 
 function iniciarAccionContinuas(accion) {
     accion(); 
-    if (temporizadorBoton === null) {
-        temporizadorBoton = setInterval(accion, 60); 
-    }
+    if (temporizadorBoton === null) temporizadorBoton = setInterval(accion, 60); 
 }
 
 function detenerAccionContinuas() {
     if (temporizadorBoton !== null) {
-        clearInterval(temporizadorBoton);
-        temporizadorBoton = null;
+        clearInterval(temporizadorBoton); temporizadorBoton = null;
     }
 }
 
 function ajustarTemperatura(cambio) {
     temperaturaActualInt = constrain(temperaturaActualInt + cambio, 0, 500);
-    if (elemTempView) elemTempView.html(temperaturaActualInt);
+    renderizarValorTemperatura();
+}
+
+function renderizarValorTemperatura() {
+    if (!elemTempView || !elemUnidadView) return;
+    
+    if (checkEscalaTemp && checkEscalaTemp.checked()) {
+        let tempCelsius = temperaturaActualInt - 273;
+        elemTempView.html(tempCelsius);
+        elemUnidadView.html("ºC");
+    } else {
+        elemTempView.html(temperaturaActualInt);
+        elemUnidadView.html("K");
+    }
 }
 
 function ajustarRadioManual(cambio) {
     let radioMinimoPermitido = radioParticula * 5;
-    radioContenedor = constrain(radioContenedor + cambio, radioMinimoPermitido, 260);
+    radioContenedor = constrain(radioContenedor + cambio, radioMinimoPermitido, 210); 
     if (elemRadioView) elemRadioView.html(int(radioContenedor));
 }
 
 function actualizarModoPared() {
+    if (!selectPared) return;
     modoPared = selectPared.value();
     if (modoPared === 'fija') {
-        wrapperRadioManual.removeClass('hidden');
-        elemRadioView.html(int(radioContenedor));
+        if (wrapperRadioManual) wrapperRadioManual.removeClass('hidden');
+        if (elemRadioView) elemRadioView.html(int(radioContenedor));
     } else {
-        wrapperRadioManual.addClass('hidden');
+        if (wrapperRadioManual) wrapperRadioManual.addClass('hidden');
     }
+    historialPuntos = []; 
 }
 
-// --- NÚCLEO FÍSICO ---
-
 function comprobarParedes(p) {
-    let distX = p.x - centroX;
-    let distY = p.y - centroY;
+    let distX = p.x - centroX; let distY = p.y - centroY;
     let distancia = sqrt(distX * distX + distY * distY);
     
     if (distancia >= radioContenedor - radioParticula) {
-        let nx = distX / distancia;
-        let ny = distY / distancia;
+        let nx = distX / distancia; let ny = distY / distancia;
         let productoEscalar = p.vx * nx + p.vy * ny;
         
         if (productoEscalar > 0) {
             impulsoAcumulado += 2 * productoEscalar;
-            totalChoques++;
-            choquesEnEsteSegundo++;
+            totalChoques++; choquesEnEsteSegundo++;
             
             p.vx = p.vx - 2 * productoEscalar * nx;
             p.vy = p.vy - 2 * productoEscalar * ny;
@@ -257,36 +334,25 @@ function comprobarParedes(p) {
 function resolverChoquesParticulas() {
     for (let i = 0; i < particulas.length; i++) {
         for (let j = i + 1; j < particulas.length; j++) {
-            let p1 = particulas[i];
-            let p2 = particulas[j];
-            
-            let dx = p2.x - p1.x;
-            let dy = p2.y - p1.y;
+            let p1 = particulas[i]; let p2 = particulas[j];
+            let dx = p2.x - p1.x; let dy = p2.y - p1.y;
             let distancia = sqrt(dx * dx + dy * dy);
-            let distanciaMinima = (p1.vx === 0 && p2.vx === 0) ? 0 : radioParticula * 2; 
+            let distanciaMinima = (p1.vx === 0 && p2.vx === 0) ? 0 : radioParticula * 2;
             
             if (distancia < distanciaMinima && distanciaMinima > 0) {
                 let sobreposicion = distanciaMinima - distancia;
-                let nx = dx / (distancia || 1); 
-                let ny = dy / (distancia || 1);
+                let nx = dx / (distancia || 1); let ny = dy / (distancia || 1);
                 
-                p1.x -= nx * (sobreposicion / 2);
-                p1.y -= ny * (sobreposicion / 2);
-                p2.x += nx * (sobreposicion / 2);
-                p2.y += ny * (sobreposicion / 2);
+                p1.x -= nx * (sobreposicion / 2); p1.y -= ny * (sobreposicion / 2);
+                p2.x += nx * (sobreposicion / 2); p2.y += ny * (sobreposicion / 2);
                 
-                let rvx = p1.vx - p2.vx;
-                let rvy = p1.vy - p2.vy;
+                let rvx = p1.vx - p2.vx; let rvy = p1.vy - p2.vy;
                 let productoEscalar = rvx * nx + rvy * ny;
                 
                 if (productoEscalar > 0) {
-                    let impulsoX = productoEscalar * nx;
-                    let impulsoY = productoEscalar * ny;
-                    
-                    p1.vx -= impulsoX;
-                    p1.vy -= impulsoY;
-                    p2.vx += impulsoX;
-                    p2.vy += impulsoY;
+                    let impulsoX = productoEscalar * nx; let impulsoY = productoEscalar * ny;
+                    p1.vx -= impulsoX; p1.vy -= impulsoY;
+                    p2.vx += impulsoX; p2.vy += impulsoY;
                 }
             }
         }
@@ -297,19 +363,14 @@ function gestionarParticulas(cantidadObjetivo, tempActual) {
     while (particulas.length < cantidadObjetivo) {
         let anguloPos = random(0, TWO_PI);
         let distanciaAleatoria = random(0, max(5, radioContenedor - radioParticula - 5));
+        let magnitudVel = 0; let anguloVel = random(0, TWO_PI);
         
-        let magnitudVel = 0;
-        let anguloVel = random(0, TWO_PI);
-        
-        if (tempActual > 0) {
-            magnitudVel = random(1.5, 3.5) * sqrt(tempActual / 300);
-        }
+        if (tempActual > 0) magnitudVel = random(1.5, 3.5) * sqrt(tempActual / 300);
         
         particulas.push({
             x: centroX + distanciaAleatoria * cos(anguloPos),
             y: centroY + distanciaAleatoria * sin(anguloPos),
-            vx: magnitudVel * cos(anguloVel),
-            vy: magnitudVel * sin(anguloVel)
+            vx: magnitudVel * cos(anguloVel), vy: magnitudVel * sin(anguloVel)
         });
     }
     while (particulas.length > cantidadObjetivo) {

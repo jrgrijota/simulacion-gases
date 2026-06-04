@@ -23,7 +23,7 @@ body {
 .control-panel {
     background-color: #1e1e1e;
     border-right: 1px solid #2d2d2d;
-    padding: 24px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -32,19 +32,19 @@ body {
 }
 
 header h1 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: #ffffff;
     font-weight: 700;
 }
 
 .subtitle {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #888;
     margin-top: 2px;
 }
 
 h2 {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: #00c8ff;
@@ -54,19 +54,13 @@ h2 {
 .control-group {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
 .input-wrapper {
     display: flex;
     flex-direction: column;
     gap: 6px;
-}
-
-label {
-    font-size: 0.85rem;
-    color: #cdcdcd;
-    font-weight: 500;
 }
 
 .label-container {
@@ -78,113 +72,214 @@ label {
 .value-badge {
     background-color: #2d2d2d;
     color: #00c8ff;
-    padding: 2px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
     font-family: monospace;
     font-weight: bold;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
-/* Deslizadores inyectados por p5 */
+/* Selector de escala de temperatura */
+.scale-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.toggle-label {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #666;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 18px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider-toggle {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #2a2a2a;
+    transition: .2s;
+    border: 1px solid #3d3d3d;
+}
+
+.slider-toggle:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #777;
+    transition: .2s;
+}
+
+input:checked + .slider-toggle {
+    background-color: #113344;
+    border-color: #00c8ff;
+}
+
+input:checked + .slider-toggle:before {
+    transform: translateX(14px);
+    background-color: #00c8ff;
+}
+
+.slider-toggle.round {
+    border-radius: 18px;
+}
+
+.slider-toggle.round:before {
+    border-radius: 50%;
+}
+
+/* Deslizadores inyectados */
 #particle-slider-container input,
 #size-slider-container input {
     width: 100%;
     accent-color: #00c8ff;
     cursor: pointer;
-    margin: 4px 0;
+    margin: 2px 0;
 }
 
 .slider-bounds {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #666;
 }
 
-/* Selectores Desplegables */
+/* Selectores desplegables estándar */
 .custom-select {
     background-color: #252525;
     border: 1px solid #2d2d2d;
     color: #ffffff;
-    padding: 10px;
+    padding: 8px;
     border-radius: 6px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
     width: 100%;
     outline: none;
 }
 
-.custom-select:focus {
-    border-color: #00c8ff;
-}
-
-/* Contenedores de botones (Steppers) */
+/* Steppers numéricos */
 .stepper-container {
     display: flex;
     align-items: center;
     background-color: #252525;
     border-radius: 8px;
-    padding: 6px;
+    padding: 4px 6px;
     border: 1px solid #2d2d2d;
     justify-content: space-between;
 }
 
 .stepper-display {
     color: #ffffff;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 700;
     font-family: monospace;
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: 2px;
 }
 
 .stepper-display .unit {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #666;
-    font-family: system-ui;
 }
 
 .stepper-btn {
     background-color: #333333;
     border: none;
     color: #ffffff;
-    font-size: 1.3rem;
-    width: 44px;
-    height: 44px;
+    font-size: 1.1rem;
+    width: 36px;
+    height: 36px;
     border-radius: 6px;
     cursor: pointer;
-    user-select: none;
-    transition: background-color 0.15s;
-}
-
-.stepper-btn:hover {
-    background-color: #444444;
-}
-
-.stepper-btn:active {
-    background-color: #00c8ff;
 }
 
 .divider {
     border: 0;
     height: 1px;
     background: #2d2d2d;
-    margin: 4px 0;
 }
 
-/* Dashboard de Métricas */
-.dashboard {
+/* Agrupador compacto de acordeones colapsables */
+.dashboard-accordion-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
-.card {
+.custom-details {
     background-color: #252525;
     border: 1px solid #2d2d2d;
-    border-radius: 8px;
-    padding: 12px 14px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.custom-details summary {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    list-style: none;
+}
+
+.custom-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.custom-details summary::after {
+    content: '►';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    color: #555;
+    transition: transform 0.15s, color 0.15s;
+}
+
+.custom-details[open] summary {
+    color: #ffffff;
+}
+
+.custom-details[open] summary::after {
+    transform: translateY(-50%) rotate(90deg);
+    color: #00c8ff;
+}
+
+.details-content {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background-color: #1a1a1a;
+    border-top: 1px solid #2d2d2d;
+}
+
+.details-content .card {
+    background-color: #222222;
+    border: 1px solid #2d2d2d;
+    border-radius: 6px;
+    padding: 10px;
 }
 
 .card.Highlight {
@@ -192,93 +287,82 @@ label {
 }
 
 .card h3 {
-    font-size: 0.75rem;
-    color: #888;
+    font-size: 0.7rem;
+    color: #666;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .metric {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: #ffffff;
     font-family: monospace;
 }
 
 .metric small {
-    font-size: 0.85rem;
-    color: #555;
-    font-family: system-ui;
-    font-weight: normal;
+    font-size: 0.75rem;
+    color: #444;
 }
 
 .metric-secondary {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: #a0a0a0;
+    color: #888;
     font-family: monospace;
 }
 
-/* Área de Simulación y Elementos Flotantes */
+/* Área de Simulación */
 .simulation-panel {
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #141414;
     height: 100vh;
-    overflow: hidden;
-    position: relative; /* Clave para anclar los elementos absolutos */
+    position: relative;
 }
 
-/* Botón Desplegable */
 .toggle-btn {
     position: absolute;
-    top: 24px;
-    right: 24px;
+    top: 20px;
+    right: 20px;
     z-index: 11;
     background-color: #1e1e1e;
     border: 1px solid #3d3d3d;
     color: #ffffff;
-    padding: 10px 16px;
+    padding: 8px 14px;
     border-radius: 6px;
-    font-weight: 600;
-    font-size: 0.9rem;
     cursor: pointer;
-    transition: background-color 0.15s, border-color 0.15s;
 }
 
-.toggle-btn:hover {
-    background-color: #2d2d2d;
-    border-color: #00c8ff;
-}
-
-/* Menú Desplegable Flotante */
 .floating-dropdown {
     position: absolute;
-    top: 74px;
-    right: 24px;
+    top: 64px;
+    right: 20px;
     z-index: 10;
     background-color: #1e1e1e;
     border: 1px solid #2d2d2d;
     border-radius: 8px;
-    padding: 18px;
-    width: 240px;
+    padding: 16px;
+    width: 250px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.floating-dropdown h3 {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #00c8ff;
-    margin-bottom: 4px;
+.checked-wrapper {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Selectores de Color */
+.checked-wrapper input {
+    cursor: pointer;
+    accent-color: #00c8ff;
+}
+
 .color-picker-container {
     display: flex;
     align-items: center;
@@ -290,13 +374,11 @@ label {
 }
 
 .custom-color-picker {
-    -webkit-appearance: none;
-    -moz-appearance: none;
     appearance: none;
     background: transparent;
     border: none;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     cursor: pointer;
 }
 
@@ -305,23 +387,10 @@ label {
     border: 1px solid #444;
 }
 
-.custom-color-picker::-moz-color-swatch {
-    border-radius: 4px;
-    border: 1px solid #444;
-}
-
 .color-text {
     font-family: monospace;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #ffffff;
-}
-
-#canvas-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 100%;
-    max-height: 100%;
 }
 
 #canvas-container canvas {
@@ -329,7 +398,6 @@ label {
     border-radius: 8px;
     max-width: 90vh;
     max-height: 90vh;
-    object-fit: contain;
 }
 
 .hidden {
