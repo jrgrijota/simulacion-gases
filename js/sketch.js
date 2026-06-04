@@ -5,13 +5,13 @@ let radioBase = 0;
 let velocidadRadio = 0;    
 let impulsoAcumulado = 0;  
 
-// Parámetros físicos de la membrana
+// Parámetros físicos de la membrana elástica estándar
 let kElastica = 0.05;      
 let amortiguacion = 0.12;  
 let masaPared = 8;         
 
 // Propiedades de las partículas (Dinamizadas)
-let radioParticula = 5;    
+let radioParticula = 3;    
 let colorParticulaHex = "#00c8ff";
 let colorCirculoHex = "#ff4646";
 let particulas = [];
@@ -22,7 +22,7 @@ let choquesEnEsteSegundo = 0;
 let choquesPorSegundo = 0;
 let ultimoTiempoMedido = 0; 
 
-// Inicialización termodinámica estricta a 273K
+// Inicialización termodinámica estable a 273K
 let temperaturaActualInt = 273;
 let temperaturaAnterior = 273; 
 
@@ -50,7 +50,8 @@ function setup() {
     sliderParticulas = createSlider(1, 200, 50, 1);
     sliderParticulas.parent('particle-slider-container');
     
-    sliderTamaño = createSlider(1, 15, 5, 1);
+    // Parámetros: createSlider(mínimo, máximo, valor_inicial, paso)
+    sliderTamaño = createSlider(1, 15, 3, 1); // <--- Cambiado el valor inicial de 5 a 3
     sliderTamaño.parent('size-slider-container');
     
     // Mapear elementos del DOM
@@ -75,13 +76,11 @@ function setup() {
     lblParticleVal = select('#particle-val');
     lblSizeVal = select('#size-val');
     
-    // Vinculación segura de listeners comprobando la existencia de los nodos
+    // Vinculación segura de listeners
     if (selectPared) selectPared.changed(actualizarModoPared);
     if (checkEscalaTemp) checkEscalaTemp.changed(renderizarValorTemperatura); 
     
     ultimoTiempoMedido = millis();
-    
-    // Inicializar velocidades iniciales acordes a 273K
     gestionarParticulas(sliderParticulas.value(), temperaturaActualInt);
 }
 
@@ -119,7 +118,7 @@ function draw() {
         if (historialPuntos.length > 35) historialPuntos.shift();
     }
     
-    // Ajuste dinámico de vectores velocidad
+    // Ajuste dinámico de velocidades por temperatura absoluta
     if (temperaturaActualInt !== temperaturaAnterior) {
         if (temperaturaActualInt === 0) {
             for (let i = 0; i < particulas.length; i++) {
@@ -142,13 +141,13 @@ function draw() {
         temperaturaAnterior = temperaturaActualInt;
     }
     
-    // Cálculos Termodinámicos
+    // Cálculos Termodinámicos estándar
     let volumenLitros = map(PI * radioContenedor * radioContenedor, PI*25*25, PI*220*220, 0.5, 5.0, true);
     let perimetro = TWO_PI * radioContenedor;
     let presionAtm = (choquesPorSegundo * 15) / perimetro;
     if (temperaturaActualInt === 0) presionAtm = 0; 
     
-    // Volcado seguro a la interfaz
+    // Volcado seguro a la interfaz jerárquica
     if (mFrecuencia) mFrecuencia.html(choquesPorSegundo);
     if (mRadio) mRadio.html(nf(radioContenedor, 3, 1));
     if (mTotales) mTotales.html(totalChoques);
@@ -157,7 +156,7 @@ function draw() {
     
     dibujarPlanoCartesiano();
     
-    // Comportamiento elástico o rígido de la pared
+    // Dinámica del muelle armónico estándar (Modo Flexible)
     if (modoPared === 'flexible') {
         let fuerzaElastica = -kElastica * (radioContenedor - radioBase);
         let fuerzaAmortiguacion = -amortiguacion * velocidadRadio;
@@ -178,6 +177,7 @@ function draw() {
     
     impulsoAcumulado = 0; 
     
+    // Dibujo del contenedor
     if (modoPared === 'flexible') {
         stroke(color(colorCirculoHex));
     } else {
@@ -187,7 +187,7 @@ function draw() {
     noFill();
     circle(centroX, centroY, radioContenedor * 2);
     
-    // Dinámica molecular
+    // Cinemática molecular
     for (let i = 0; i < particulas.length; i++) {
         let p = particulas[i];
         p.x += p.vx; p.y += p.vy;
@@ -282,7 +282,6 @@ function ajustarTemperatura(cambio) {
 
 function renderizarValorTemperatura() {
     if (!elemTempView || !elemUnidadView) return;
-    
     if (checkEscalaTemp && checkEscalaTemp.checked()) {
         let tempCelsius = temperaturaActualInt - 273;
         elemTempView.html(tempCelsius);
@@ -320,8 +319,9 @@ function comprobarParedes(p) {
         let productoEscalar = p.vx * nx + p.vy * ny;
         
         if (productoEscalar > 0) {
-            impulsoAcumulado += 2 * productoEscalar;
-            totalChoques++; choquesEnEsteSegundo++;
+            impulsoAcumulado += 2 * productoEscalar; 
+            totalChoques++; 
+            choquesEnEsteSegundo++;
             
             p.vx = p.vx - 2 * productoEscalar * nx;
             p.vy = p.vy - 2 * productoEscalar * ny;
