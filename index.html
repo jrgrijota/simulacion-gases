@@ -5,24 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulación: Presión de Gases</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background-color: #1e1e1e;
-            color: #ffffff;
-            font-family: sans-serif;
-        }
-        canvas {
-            display: block;
-            margin: 20px 0;
-            border: 2px solid #ffffff;
-        }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>Simulación de Presión Colectiva</h1>
-    <div id="canvas-container"></div>
+    <div class="app-container">
+        <aside class="control-panel">
+            <header>
+                <h1>Cinética de Gases</h1>
+                <p class="subtitle">Modelo de presión microscópica</p>
+            </header>
+            
+            <hr class="divider">
+
+            <section class="control-group">
+                <h2>Configuración</h2>
+                
+                <div class="input-wrapper">
+                    <div class="label-container">
+                        <label>Cantidad de partículas</label>
+                        <span id="particle-val" class="value-badge">50</span>
+                    </div>
+                    <div id="particle-slider-container"></div>
+                    <div class="slider-bounds">
+                        <span>1</span>
+                        <span>200</span>
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <label>Temperatura Objetivo</label>
+                    <div class="stepper-container">
+                        <button id="btn-bajar" class="stepper-btn">-</button>
+                        <div class="stepper-display">
+                            <span id="input-temp-view">0</span>
+                            <span class="unit">K</span>
+                        </div>
+                        <button id="btn-subir" class="stepper-btn">+</button>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="divider">
+
+            <section class="control-group">
+                <h2>Monitorización</h2>
+                <div class="dashboard">
+                    <div class="card Highlight">
+                        <h3>Frecuencia de Impactos</h3>
+                        <div class="metric"><span id="metric-frecuencia">0</span> <small>choques/s</small></div>
+                    </div>
+                    <div class="card">
+                        <h3>Radio del Contenedor</h3>
+                        <div class="metric"><span id="metric-radio">100.0</span> <small>px</small></div>
+                    </div>
+                    <div class="card">
+                        <h3>Choques Totales acumulados</h3>
+                        <div class="metric-secondary"><span id="metric-totales">0</span></div>
+                    </div>
+                </div>
+            </section>
+        </aside>
+
+        <main class="simulation-panel">
+            <div id="canvas-container"></div>
+        </main>
+    </div>
     <script src="js/sketch.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // Configuración del contenedor circular (Dinámico)
 let centroX, centroY;
-let radioContenedor = 100; 
+let radioContenedor = 120; 
 let radioBase = 0;         
 let velocidadRadio = 0;    
 let impulsoAcumulado = 0;  
@@ -14,85 +14,95 @@ let masaPared = 8;
 let radioParticula = 5;    
 let particulas = [];
 
-// Contadores de choques (Nuevas variables)
+// Contadores de choques
 let totalChoques = 0;
 let choquesEnEsteSegundo = 0;
 let choquesPorSegundo = 0;
-let ultimoTiempoMedido = 0; // Registra el tiempo en milisegundos
+let ultimoTiempoMedido = 0; 
 
-// Componentes de interfaz (Sliders)
-let sliderParticulas;
-let sliderTemperatura;
+// Variables globales de control térmico interno
+let temperaturaActualInt = 0;
 let temperaturaAnterior = 0; 
 
+// Referencias de elementos HTML (Ecosistema DOM)
+let sliderParticulas;
+let elemTempView;
+let mFrecuencia, mRadio, mTotales, lblParticleVal;
+
 function setup() {
-    let canvas = createCanvas(600, 600);
+    let canvas = createCanvas(580, 580);
     canvas.parent('canvas-container');
     
     centroX = width / 2;
     centroY = height / 2;
     
+    // Alojar el slider creado en el contenedor HTML diseñado
     sliderParticulas = createSlider(1, 200, 50, 1);
-    sliderParticulas.position(20, 70);
+    sliderParticulas.parent('particle-slider-container');
     
-    sliderTemperatura = createSlider(0, 600, 0, 10);
-    sliderTemperatura.position(20, 120);
+    // Mapear elementos del DOM
+    elemTempView = select('#input-temp-view');
+    mFrecuencia = select('#metric-frecuencia');
+    mRadio = select('#metric-radio');
+    mTotales = select('#metric-totales');
+    lblParticleVal = select('#particle-val');
+    
+    // Asignar listeners a los botones del panel de control
+    select('#btn-subir').mousePressed(subirTemperatura);
+    select('#btn-bajar').mousePressed(bajarTemperatura);
     
     ultimoTiempoMedido = millis();
 }
 
 function draw() {
-    background(30);
+    background(20); // Fondo gris oscuro limpio coincidente con la interfaz
     
+    // Sincronización bidireccional UI -> Datos
     let cantidadDeseada = sliderParticulas.value();
-    let tempActual = sliderTemperatura.value();
+    lblParticleVal.html(cantidadDeseada);
     
-    // Sincronizar partículas
-    gestionarParticulas(cantidadDeseada, tempActual);
+    gestionarParticulas(cantidadDeseada, temperaturaActualInt);
     
-    // 1. CÁLCULO DE CHOQUES POR SEGUNDO (Frecuencia)
-    // Si ha transcurrido 1 segundo (1000 milisegundos), actualiza el indicador y resetea el parcial
+    // 1. Monitor de impactos por segundo
     if (millis() - ultimoTiempoMedido >= 1000) {
         choquesPorSegundo = choquesEnEsteSegundo;
         choquesEnEsteSegundo = 0;
         ultimoTiempoMedido = millis();
     }
     
-    // 2. GESTIÓN DEL CERO ABSOLUTO Y VARIACIÓN TÉRMICA
-    if (tempActual !== temperaturaAnterior) {
-        if (tempActual === 0) {
+    // 2. Modificación de velocidad molecular según temperatura
+    if (temperaturaActualInt !== temperaturaAnterior) {
+        if (temperaturaActualInt === 0) {
             for (let i = 0; i < particulas.length; i++) {
                 particulas[i].vx = 0;
                 particulas[i].vy = 0;
             }
         } else if (temperaturaAnterior === 0) {
             for (let i = 0; i < particulas.length; i++) {
-                let magnitudVel = random(1.5, 3.5) * sqrt(tempActual / 300);
+                let magnitudVel = random(1.5, 3.5) * sqrt(temperaturaActualInt / 300);
                 let anguloVel = random(0, TWO_PI);
                 particulas[i].vx = magnitudVel * cos(anguloVel);
                 particulas[i].vy = magnitudVel * sin(anguloVel);
             }
         } else {
-            let factorEscala = sqrt(tempActual / temperaturaAnterior);
+            let factorEscala = sqrt(temperaturaActualInt / temperaturaAnterior);
             for (let i = 0; i < particulas.length; i++) {
                 particulas[i].vx *= factorEscala;
                 particulas[i].vy *= factorEscala;
             }
         }
-        temperaturaAnterior = tempActual;
+        temperaturaAnterior = temperaturaActualInt;
     }
     
-    // Interfaz de texto de datos físicos
-    fill(255);
-    noStroke();
-    textSize(14);
-    text("Cantidad de partículas: " + cantidadDeseada, 170, 35);
-    text("Temperatura: " + tempActual + " K", 170, 55);
-    text("Radio actual: " + nf(radioContenedor, 3, 1) + " px", 170, 75);
-    text("Choques totales: " + totalChoques, 170, 95);
-    text("Frecuencia (Choques/seg): " + choquesPorSegundo, 170, 115);
+    // 3. Inyección directa de datos físicos en el panel HTML
+    mFrecuencia.html(choquesPorSegundo);
+    mRadio.html(nf(radioContenedor, 3, 1));
+    mTotales.html(totalChoques);
     
-    // 3. DINÁMICA DE COLAPSO DE LA PARED
+    // 4. Renderizado estético del termómetro integrado en el lienzo
+    dibujarTermometro(temperaturaActualInt);
+    
+    // 5. Simulación de la pared elástica
     let fuerzaElastica = -kElastica * (radioContenedor - radioBase);
     let fuerzaAmortiguacion = -amortiguacion * velocidadRadio;
     let fuerzaTotal = impulsoAcumulado + fuerzaElastica + fuerzaAmortiguacion;
@@ -101,7 +111,6 @@ function draw() {
     velocidadRadio += aceleracionRadio;
     radioContenedor += velocidadRadio;
     
-    // RESTRICCIÓN: El radio mínimo debe ser 5 veces el radio de la partícula (5 * 5 = 25 px)
     let radioMinimoPermitido = radioParticula * 5;
     if (radioContenedor < radioMinimoPermitido) {
         radioContenedor = radioMinimoPermitido;
@@ -110,13 +119,13 @@ function draw() {
     
     impulsoAcumulado = 0; 
     
-    // Dibujar contenedor circular
-    stroke(255, 100, 100);
-    strokeWeight(2);
+    // Contenedor elástico (Color de alerta dinámico)
+    stroke(255, 70, 70);
+    strokeWeight(2.5);
     noFill();
     circle(centroX, centroY, radioContenedor * 2);
     
-    // 4. ACTUALIZACIÓN DE POSICIONES Y PAREDES
+    // 6. Actualización cinemática de las partículas
     for (let i = 0; i < particulas.length; i++) {
         let p = particulas[i];
         p.x += p.vx;
@@ -124,10 +133,9 @@ function draw() {
         comprobarParedes(p);
     }
     
-    // 5. RESOLUCIÓN DE CHOQUES INTERPARTÍCULAS
     resolverChoquesParticulas();
     
-    // 6. RENDERIZADO DE PARTÍCULAS
+    // 7. Renderizado estricto de las partículas
     for (let i = 0; i < particulas.length; i++) {
         let p = particulas[i];
         fill(0, 200, 255);
@@ -135,6 +143,46 @@ function draw() {
         circle(p.x, p.y, radioParticula * 2);
     }
 }
+
+// --- MANEJADORES DE EVENTOS DE INTERFAZ ---
+
+function subirTemperatura() {
+    temperaturaActualInt = constrain(temperaturaActualInt + 10, 0, 500);
+    elemTempView.html(temperaturaActualInt);
+}
+
+function bajarTemperatura() {
+    temperaturaActualInt = constrain(temperaturaActualInt - 10, 0, 500);
+    elemTempView.html(temperaturaActualInt);
+}
+
+function dibujarTermometro(temp) {
+    let x = 35;
+    let yBase = 540;
+    let altoTubo = 160;
+    let anchoTubo = 10;
+    let radioBulbo = 15;
+    
+    let colorFrio = color(0, 120, 255);
+    let colorCalor = color(255, 40, 40);
+    
+    let factorInterp = map(temp, 0, 500, 0, 1);
+    let colorMercurio = lerpColor(colorFrio, colorCalor, factorInterp);
+    
+    stroke(70);
+    strokeWeight(2);
+    fill(30);
+    rect(x - anchoTubo / 2, yBase - altoTubo, anchoTubo, altoTubo, 5, 5, 0, 0);
+    circle(x, yBase, radioBulbo * 2);
+    
+    noStroke();
+    fill(colorMercurio);
+    circle(x, yBase, radioBulbo * 1.5);
+    let alturaLiquido = map(temp, 0, 500, 8, altoTubo - 10);
+    rect(x - (anchoTubo * 0.6) / 2, yBase - alturaLiquido, anchoTubo * 0.6, alturaLiquido);
+}
+
+// --- NÚCLEO DE CÁLCULO FÍSICO ---
 
 function comprobarParedes(p) {
     let distX = p.x - centroX;
@@ -148,8 +196,6 @@ function comprobarParedes(p) {
         
         if (productoEscalar > 0) {
             impulsoAcumulado += 2 * productoEscalar;
-            
-            // Incrementar contadores globales y temporales de choques
             totalChoques++;
             choquesEnEsteSegundo++;
             

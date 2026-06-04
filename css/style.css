@@ -1,0 +1,214 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    height: 100vh;
+}
+
+/* Panel de Control Lateral */
+.control-panel {
+    background-color: #1e1e1e;
+    border-right: 1px solid #2d2d2d;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+}
+
+header h1 {
+    font-size: 1.4rem;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 2px;
+}
+
+h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #00c8ff;
+    margin-bottom: 12px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+label {
+    font-size: 0.9rem;
+    color: #cdcdcd;
+    font-weight: 500;
+}
+
+.label-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.value-badge {
+    background-color: #2d2d2d;
+    color: #00c8ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Modificación del slider nativo inyectado por p5 */
+#particle-slider-container input {
+    width: 100%;
+    accent-color: #00c8ff;
+    cursor: pointer;
+    margin: 8px 0;
+}
+
+.slider-bounds {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+/* Selector paso a paso de Temperatura */
+.stepper-container {
+    display: flex;
+    align-items: center;
+    background-color: #252525;
+    border-radius: 8px;
+    padding: 6px;
+    border: 1px solid #2d2d2d;
+    justify-content: space-between;
+}
+
+.stepper-display {
+    color: #ffffff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-family: monospace;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.stepper-display .unit {
+    font-size: 0.9rem;
+    color: #666;
+    font-family: system-ui;
+}
+
+.stepper-btn {
+    background-color: #333333;
+    border: none;
+    color: #ffffff;
+    font-size: 1.3rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+}
+
+.stepper-btn:hover {
+    background-color: #444444;
+}
+
+.stepper-btn:active {
+    background-color: #00c8ff;
+    transform: scale(0.95);
+}
+
+.divider {
+    border: 0;
+    height: 1px;
+    background: #2d2d2d;
+    margin: 8px 0;
+}
+
+/* Dashboard de métricas */
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card {
+    background-color: #252525;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.card.Highlight {
+    border-left: 3px solid #00c8ff;
+}
+
+.card h3 {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.metric {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #ffffff;
+    font-family: monospace;
+}
+
+.metric small {
+    font-size: 0.85rem;
+    color: #555;
+    font-family: system-ui;
+    font-weight: normal;
+}
+
+.metric-secondary {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #a0a0a0;
+    font-family: monospace;
+}
+
+/* Área de Simulación */
+.simulation-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #141414;
+}
+
+#canvas-container canvas {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    border-radius: 8px;
+}
