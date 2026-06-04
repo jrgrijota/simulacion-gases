@@ -18,7 +18,7 @@
             <hr class="divider">
 
             <section class="control-group">
-                <h2>Configuración de Gases</h2>
+                <h2>Configuración del gas</h2>
                 
                 <div class="input-wrapper">
                     <div class="label-container">
@@ -31,36 +31,10 @@
                         <span>200</span>
                     </div>
                 </div>
-            </section>
-
-            <hr class="divider">
-
-            <section class="control-group">
-                <h2>Configuración del Entorno</h2>
-
-                <div class="input-wrapper">
-                    <label for="select-pared">Comportamiento de la pared</label>
-                    <select id="select-pared" class="custom-select">
-                        <option value="flexible" selected>Membrana Flexible (Globo)</option>
-                        <option value="fija">Pared Rígida (Fija)</option>
-                    </select>
-                </div>
-
-                <div id="wrapper-radio-manual" class="input-wrapper hidden">
-                    <label>Radio del Contenedor</label>
-                    <div class="stepper-container">
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
-                        <div class="stepper-display">
-                            <span id="input-radio-view">120</span>
-                            <span class="unit">px</span>
-                        </div>
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
-                    </div>
-                </div>
 
                 <div class="input-wrapper">
                     <div class="label-container">
-                        <label>Temperatura Objetivo</label>
+                        <label>Temperatura</label>
                         <div class="scale-toggle">
                             <span class="toggle-label">K</span>
                             <label class="switch">
@@ -84,42 +58,64 @@
             <hr class="divider">
 
             <section class="control-group">
-                <h2>Panel de Análisis</h2>
-                <div class="dashboard-accordion-group">
-                    
-                    <details class="custom-details" open>
-                        <summary>Monitorización del Sistema</summary>
-                        <div class="details-content">
-                            <div class="card Highlight">
-                                <h3>Frecuencia de Impactos</h3>
-                                <div class="metric"><span id="metric-frecuencia">0</span> <small>choques/s</small></div>
-                            </div>
-                            <div class="card">
-                                <h3>Choques Totales</h3>
-                                <div class="metric-secondary"><span id="metric-totales">0</span></div>
-                            </div>
-                        </div>
-                    </details>
+                <h2>Comportamiento de recipiente</h2>
 
-                    <details class="custom-details" open>
-                        <summary>Datos Físicos (P y V)</summary>
-                        <div class="details-content">
-                            <div class="card">
-                                <h3>Presión Calculada (P)</h3>
-                                <div class="metric"><span id="metric-presion-fisica">0.00</span> <small>atm</small></div>
-                            </div>
-                            <div class="card">
-                                <h3>Volumen del Contenedor (V)</h3>
-                                <div class="metric"><span id="metric-volumen-fisico">0.00</span> <small>L</small></div>
-                            </div>
-                            <div class="card">
-                                <h3>Radio de la Pared (R)</h3>
-                                <div class="metric-secondary"><span id="metric-radio">120.0</span> px</div>
-                            </div>
-                        </div>
-                    </details>
-                    
+                <div class="input-wrapper">
+                    <select id="select-pared" class="custom-select">
+                        <option value="flexible" selected>Membrana Flexible (Globo)</option>
+                        <option value="fija">Pared Rígida (Fija)</option>
+                    </select>
                 </div>
+
+                <div id="wrapper-radio-manual" class="input-wrapper hidden">
+                    <label>Radio del Contenedor</label>
+                    <div class="stepper-container">
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <div class="stepper-display">
+                            <span id="input-radio-view">120</span>
+                            <span class="unit">px</span>
+                        </div>
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="divider">
+
+            <section class="control-group">
+                <h2>Datos Físicos</h2>
+                <div class="dashboard-static-group">
+                    <div class="card">
+                        <h3>Presión (P)</h3>
+                        <div class="metric"><span id="metric-presion-fisica">0.00</span> <small>atm</small></div>
+                    </div>
+                    <div class="card">
+                        <h3>Volumen (V)</h3>
+                        <div class="metric"><span id="metric-volumen-fisico">0.00</span> <small>L</small></div>
+                    </div>
+                    <div class="card hidden-radio-px">
+                        <h3>Radio de la Pared (R)</h3>
+                        <div class="metric-secondary"><span id="metric-radio">120.0</span> px</div>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="divider">
+
+            <section class="control-group">
+                <details class="custom-details" open>
+                    <summary>Monitorización del sistema</summary>
+                    <div class="details-content">
+                        <div class="card Highlight">
+                            <h3>Frecuencia de impactos</h3>
+                            <div class="metric"><span id="metric-frecuencia">0</span> <small>choques/s</small></div>
+                        </div>
+                        <div class="card">
+                            <h3>Choques totales</h3>
+                            <div class="metric-secondary"><span id="metric-totales">0</span></div>
+                        </div>
+                    </div>
+                </details>
             </section>
         </aside>
 

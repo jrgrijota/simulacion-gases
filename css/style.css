@@ -403,3 +403,23 @@ input:checked + .slider-toggle:before {
 .hidden {
     display: none !important;
 }
+
+/* Agrupador para tarjetas de Datos Físicos abiertos */
+.dashboard-static-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Ocultación estética del radio en píxeles del panel para enfocar al alumno en P y V */
+.hidden-radio-px {
+    display: none !important;
+}
+
+/* Suavizado visual general del panel lateral */
+.control-panel .divider {
+    border: 0;
+    height: 1px;
+    background: #2a2a2a;
+    margin: 6px 0;
+}
