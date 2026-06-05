@@ -102,22 +102,27 @@
 
             <hr class="divider">
 
-<section class="control-group">
-    <details class="custom-details"> <summary>Monitorización del sistema</summary>
-        <div class="details-content">
-            <div class="card Highlight">
-                <h3>Frecuencia de impactos</h3>
-                <div class="metric"><span id="metric-frecuencia">0</span> <small>choques/s</small></div>
-            </div>
-            <div class="card">
-                <h3>Choques totales</h3>
-                <div class="metric-secondary"><span id="metric-totales">0</span></div>
-            </div>
-        </div>
-    </details>
-</section>        </aside>
+            <section class="control-group">
+                <details class="custom-details">
+                    <summary>Monitorización del sistema</summary>
+                    <div class="details-content">
+                        <div class="card Highlight">
+                            <h3>Frecuencia de impactos</h3>
+                            <div class="metric"><span id="metric-frecuencia">0</span> <small>choques/s</small></div>
+                        </div>
+                        <div class="card">
+                            <h3>Choques totales</h3>
+                            <div class="metric-secondary"><span id="metric-totales">0</span></div>
+                        </div>
+                    </div>
+                </details>
+            </section>
+        </aside>
 
-        <main class="simulation-panel">
+<main class="simulation-panel">
+            <!-- NUEVO: Control de reproducción de la simulación (UX Izquierda) -->
+            <button id="play-pause-btn" class="toggle-btn play-btn" onclick="alternarReproduccion()">⏸ Pausar</button>
+            
             <button id="menu-toggle-btn" class="toggle-btn" onclick="alternarMenuFlotante()">⚙ Visualización</button>
             
             <div id="floating-menu" class="floating-dropdown hidden">
@@ -125,7 +130,7 @@
                 <div class="input-wrapper">
                     <div class="label-container">
                         <label>Tamaño partícula</label>
-                        <span id="size-val" class="value-badge">5 px</span>
+                        <span id="size-val" class="value-badge">3 px</span>
                     </div>
                     <div id="size-slider-container"></div>
                     <div class="slider-bounds">
@@ -153,6 +158,11 @@
                 <div class="input-wrapper checked-wrapper">
                     <input type="checkbox" id="check-termografico" checked>
                     <label for="check-termografico">Color según velocidad</label>
+                </div>
+
+                <div class="input-wrapper checked-wrapper">
+                    <input type="checkbox" id="check-fullscreen">
+                    <label for="check-fullscreen">Pantalla completa</label>
                 </div>
             </div>
 

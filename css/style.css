@@ -215,13 +215,25 @@ input:checked + .slider-toggle:before {
     background: #2d2d2d;
 }
 
-/* Agrupador compacto de acordeones colapsables */
-.dashboard-accordion-group {
+/* Agrupador para tarjetas de Datos Físicos abiertos */
+.dashboard-static-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
+.hidden-radio-px {
+    display: none !important;
+}
+
+.control-panel .divider {
+    border: 0;
+    height: 1px;
+    background: #2a2a2a;
+    margin: 6px 0;
+}
+
+/* Acordeones colapsables */
 .custom-details {
     background-color: #252525;
     border: 1px solid #2d2d2d;
@@ -320,7 +332,7 @@ input:checked + .slider-toggle:before {
     justify-content: center;
     background-color: #141414;
     height: 100vh;
-    position: relative;
+    position: relative; /* Clave para el menú flotante */
 }
 
 .toggle-btn {
@@ -400,26 +412,47 @@ input:checked + .slider-toggle:before {
     max-height: 90vh;
 }
 
+/* Reglas estrictas de Pantalla Completa para el Contenedor Global */
+.app-container:fullscreen {
+    background-color: #121212;
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    margin: 0;
+}
+
+.app-container:fullscreen .control-panel {
+    height: 100vh;
+    background-color: #1e1e1e;
+    border-right: 1px solid #2d2d2d;
+}
+
+.app-container:fullscreen .simulation-panel {
+    background-color: #141414;
+    height: 100vh;
+}
+
+.app-container:fullscreen #canvas-container canvas {
+    max-width: 90vh;
+    max-height: 90vh;
+}
+
 .hidden {
     display: none !important;
 }
-
-/* Agrupador para tarjetas de Datos Físicos abiertos */
-.dashboard-static-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+/* Posicionamiento específico del botón de Play/Pause */
+#play-pause-btn {
+    left: 20px;
+    right: auto;
+    font-weight: 600;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
-/* Ocultación estética del radio en píxeles del panel para enfocar al alumno en P y V */
-.hidden-radio-px {
-    display: none !important;
-}
-
-/* Suavizado visual general del panel lateral */
-.control-panel .divider {
-    border: 0;
-    height: 1px;
-    background: #2a2a2a;
-    margin: 6px 0;
+/* Estado visual cuando la simulación está detenida */
+#play-pause-btn.estado-pausado {
+    border-color: #00ff88;
+    color: #00ff88;
+    background-color: #112a1e;
 }

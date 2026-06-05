@@ -10,7 +10,7 @@ let kElastica = 0.05;
 let amortiguacion = 0.12;  
 let masaPared = 8;         
 
-// Propiedades de las partículas (Dinamizadas)
+// Propiedades de las partículas (Dinamizadas a 3px de inicio)
 let radioParticula = 3;    
 let colorParticulaHex = "#00c8ff";
 let colorCirculoHex = "#ff4646";
@@ -22,19 +22,18 @@ let choquesEnEsteSegundo = 0;
 let choquesPorSegundo = 0;
 let ultimoTiempoMedido = 0; 
 
-// Inicialización termodinámica estable a 273K
+// Inicialización termodinámica de inicio a 273K
 let temperaturaActualInt = 273;
 let temperaturaAnterior = 273; 
 
-// Gestión del modo de pared
+// Gestión del modo de pared y estados
 let modoPared = 'flexible'; 
 let temporizadorBoton = null;
-
-// Historial de puntos para la gráfica integrada
+let simulacionActiva = true; // --- NUEVO: Estado de reproducción
 let historialPuntos = []; 
 
 // Referencias de elementos HTML
-let sliderParticulas, sliderTamaño, checkTermografico;
+let sliderParticulas, sliderTamaño, checkTermografico, checkFullscreen, btnPlayPause;
 let pickerColor, elemColorHex, pickerColorCirculo, elemColorCirculoHex;
 let elemTempView, elemUnidadView, checkEscalaTemp, elemRadioView, wrapperRadioManual, selectPared;
 let mFrecuencia, mRadio, mTotales, lblParticleVal, lblSizeVal;
@@ -50,8 +49,7 @@ function setup() {
     sliderParticulas = createSlider(1, 200, 50, 1);
     sliderParticulas.parent('particle-slider-container');
     
-    // Parámetros: createSlider(mínimo, máximo, valor_inicial, paso)
-    sliderTamaño = createSlider(1, 15, 3, 1); // <--- Cambiado el valor inicial de 5 a 3
+    sliderTamaño = createSlider(1, 15, 3, 1); 
     sliderTamaño.parent('size-slider-container');
     
     // Mapear elementos del DOM
@@ -62,6 +60,8 @@ function setup() {
     wrapperRadioManual = select('#wrapper-radio-manual');
     selectPared = select('#select-pared');
     checkTermografico = select('#check-termografico');
+    checkFullscreen = select('#check-fullscreen'); 
+    btnPlayPause = select('#play-pause-btn'); // --- NUEVO
     
     pickerColor = select('#color-picker-particula');
     elemColorHex = select('#color-hex-val');
@@ -76,9 +76,15 @@ function setup() {
     lblParticleVal = select('#particle-val');
     lblSizeVal = select('#size-val');
     
-    // Vinculación segura de listeners
     if (selectPared) selectPared.changed(actualizarModoPared);
     if (checkEscalaTemp) checkEscalaTemp.changed(renderizarValorTemperatura); 
+    if (checkFullscreen) checkFullscreen.changed(alternarPantallaCompleta); 
+    
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && checkFullscreen) {
+            checkFullscreen.checked(false);
+        }
+    });
     
     ultimoTiempoMedido = millis();
     gestionarParticulas(sliderParticulas.value(), temperaturaActualInt);
@@ -104,6 +110,7 @@ function draw() {
     
     gestionarParticulas(cantidadDeseada, temperaturaActualInt);
     
+    // El reloj de muestreo analítico se detiene automáticamente si el loop no corre
     if (millis() - ultimoTiempoMedido >= 1000) {
         choquesPorSegundo = choquesEnEsteSegundo;
         choquesEnEsteSegundo = 0;
@@ -118,7 +125,6 @@ function draw() {
         if (historialPuntos.length > 35) historialPuntos.shift();
     }
     
-    // Ajuste dinámico de velocidades por temperatura absoluta
     if (temperaturaActualInt !== temperaturaAnterior) {
         if (temperaturaActualInt === 0) {
             for (let i = 0; i < particulas.length; i++) {
@@ -141,13 +147,11 @@ function draw() {
         temperaturaAnterior = temperaturaActualInt;
     }
     
-    // Cálculos Termodinámicos estándar
     let volumenLitros = map(PI * radioContenedor * radioContenedor, PI*25*25, PI*220*220, 0.5, 5.0, true);
     let perimetro = TWO_PI * radioContenedor;
     let presionAtm = (choquesPorSegundo * 15) / perimetro;
     if (temperaturaActualInt === 0) presionAtm = 0; 
     
-    // Volcado seguro a la interfaz jerárquica
     if (mFrecuencia) mFrecuencia.html(choquesPorSegundo);
     if (mRadio) mRadio.html(nf(radioContenedor, 3, 1));
     if (mTotales) mTotales.html(totalChoques);
@@ -156,7 +160,6 @@ function draw() {
     
     dibujarPlanoCartesiano();
     
-    // Dinámica del muelle armónico estándar (Modo Flexible)
     if (modoPared === 'flexible') {
         let fuerzaElastica = -kElastica * (radioContenedor - radioBase);
         let fuerzaAmortiguacion = -amortiguacion * velocidadRadio;
@@ -177,7 +180,6 @@ function draw() {
     
     impulsoAcumulado = 0; 
     
-    // Dibujo del contenedor
     if (modoPared === 'flexible') {
         stroke(color(colorCirculoHex));
     } else {
@@ -187,7 +189,6 @@ function draw() {
     noFill();
     circle(centroX, centroY, radioContenedor * 2);
     
-    // Cinemática molecular
     for (let i = 0; i < particulas.length; i++) {
         let p = particulas[i];
         p.x += p.vx; p.y += p.vy;
@@ -196,7 +197,6 @@ function draw() {
     
     resolverChoquesParticulas();
     
-    // Renderizado cromático de las partículas
     let colorFijo = color(colorParticulaHex);
     let colorFrio = color(0, 100, 255); 
     let colorCaliente = color(255, 50, 50); 
@@ -256,6 +256,37 @@ function dibujarPlanoCartesiano() {
     }
 }
 
+// --- NUEVO: Función de control de la línea de tiempo ---
+function alternarReproduccion() {
+    if (!btnPlayPause) return;
+    
+    simulacionActiva = !simulacionActiva;
+    
+    if (simulacionActiva) {
+        btnPlayPause.html("⏸ Pausar");
+        btnPlayPause.removeClass("estado-pausado");
+        loop(); // Reanuda el motor gráfico de p5.js
+    } else {
+        btnPlayPause.html("▶ Reanudar");
+        btnPlayPause.addClass("estado-pausado");
+        noLoop(); // Congela el motor gráfico de p5.js de forma asíncrona
+    }
+}
+
+function alternarPantallaCompleta() {
+    if (!checkFullscreen) return;
+    let contenedorGlobal = document.querySelector('.app-container');
+    if (checkFullscreen.checked()) {
+        if (contenedorGlobal && contenedorGlobal.requestFullscreen) {
+            contenedorGlobal.requestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
 function alternarMenuFlotante() {
     let menu = select('#floating-menu');
     if (menu) {
@@ -265,6 +296,7 @@ function alternarMenuFlotante() {
 }
 
 function iniciarAccionContinuas(accion) {
+    if (!simulacionActiva) return; // Bloquear interacción en pausa
     accion(); 
     if (temporizadorBoton === null) temporizadorBoton = setInterval(accion, 60); 
 }
@@ -276,6 +308,7 @@ function detenerAccionContinuas() {
 }
 
 function ajustarTemperatura(cambio) {
+    if (!simulacionActiva) return;
     temperaturaActualInt = constrain(temperaturaActualInt + cambio, 0, 500);
     renderizarValorTemperatura();
 }
@@ -293,6 +326,7 @@ function renderizarValorTemperatura() {
 }
 
 function ajustarRadioManual(cambio) {
+    if (!simulacionActiva) return;
     let radioMinimoPermitido = radioParticula * 5;
     radioContenedor = constrain(radioContenedor + cambio, radioMinimoPermitido, 210); 
     if (elemRadioView) elemRadioView.html(int(radioContenedor));
