@@ -9,6 +9,7 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- PANEL IZQUIERDO: Controles físicos -->
         <aside class="control-panel">
             <header>
                 <h1>Cinética de Gases</h1>
@@ -20,16 +21,26 @@
             <section class="control-group">
                 <h2>Configuración del gas</h2>
                 
-<div class="input-wrapper">
-    <div class="label-container">
-        <label>Cantidad de partículas</label>
-        <span id="particle-val" class="value-badge">50</span>
-    </div>
-    <div id="particle-slider-container"></div>
-    <div class="slider-bounds">
-        <span>1</span>
-        <span>500</span> </div>
-</div>
+                <!-- Cantidad de partículas -->
+                <div class="input-wrapper">
+                    <div class="label-container">
+                        <label>Cantidad de partículas</label>
+                    </div>
+                    <div class="stepper-container">
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <div class="stepper-display">
+                            <input type="number" id="input-direct-particles" class="input-inline-editable" value="50" min="1" max="500">
+                        </div>
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
+                    </div>
+                    <div id="particle-slider-container"></div>
+                    <div class="slider-bounds">
+                        <span>1</span>
+                        <span>500</span>
+                    </div>
+                </div>
+
+                <!-- Temperatura -->
                 <div class="input-wrapper">
                     <div class="label-container">
                         <label>Temperatura</label>
@@ -43,12 +54,17 @@
                         </div>
                     </div>
                     <div class="stepper-container">
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperatura(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
                         <div class="stepper-display">
-                            <span id="input-temp-view">273</span>
+                            <input type="number" id="input-direct-temp" class="input-inline-editable" value="273" min="0" max="500">
                             <span id="unit-temp-view" class="unit">K</span>
                         </div>
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperatura(10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
+                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
+                    </div>
+                    <div id="temp-slider-container"></div>
+                    <div class="slider-bounds">
+                        <span id="lbl-temp-min">0 K</span>
+                        <span id="lbl-temp-max">500 K</span>
                     </div>
                 </div>
             </section>
@@ -57,7 +73,6 @@
 
             <section class="control-group">
                 <h2>Comportamiento de recipiente</h2>
-
                 <div class="input-wrapper">
                     <select id="select-pared" class="custom-select">
                         <option value="flexible" selected>Membrana Flexible (Globo)</option>
@@ -70,7 +85,7 @@
                     <div class="stepper-container">
                         <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
                         <div class="stepper-display">
-                            <span id="input-radio-view">120</span>
+                            <span id="input-radio-view">90</span>
                             <span class="unit">px</span>
                         </div>
                         <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
@@ -82,18 +97,18 @@
 
             <section class="control-group">
                 <h2>Datos Físicos</h2>
-                <div class="dashboard-static-group">
-                    <div class="card">
+                <div class="dashboard-static-group horizontal-layout">
+                    <div class="card card-data">
                         <h3>Presión (P)</h3>
                         <div class="metric"><span id="metric-presion-fisica">0.00</span> <small>atm</small></div>
                     </div>
-                    <div class="card">
+                    <div class="card card-data">
                         <h3>Volumen (V)</h3>
                         <div class="metric"><span id="metric-volumen-fisico">0.00</span> <small>L</small></div>
                     </div>
                     <div class="card hidden-radio-px">
                         <h3>Radio de la Pared (R)</h3>
-                        <div class="metric-secondary"><span id="metric-radio">120.0</span> px</div>
+                        <div class="metric-secondary"><span id="metric-radio">90.0</span> px</div>
                     </div>
                 </div>
             </section>
@@ -117,26 +132,31 @@
             </section>
         </aside>
 
-<main class="simulation-panel">
-            <!-- NUEVO: Control de reproducción de la simulación (UX Izquierda) -->
+        <!-- AREA CENTRAL: Simulación -->
+        <main class="simulation-panel">
             <button id="play-pause-btn" class="toggle-btn play-btn" onclick="alternarReproduccion()">⏸ Pausar</button>
+            <button id="drawer-toggle-btn" class="toggle-btn drawer-btn" onclick="alternarDrawer()">⚙ Ajustes Visuales</button>
+            <div id="canvas-container"></div>
+        </main>
+
+        <!-- PANEL DERECHO: Cajón Desplegable (Drawer) -->
+        <aside id="visual-drawer" class="visual-drawer drawer-closed">
+            <div class="drawer-header">
+                <h2>Ajustes Visuales</h2>
+                <button class="close-drawer-btn" onclick="alternarDrawer()">×</button>
+            </div>
             
-            <button id="menu-toggle-btn" class="toggle-btn" onclick="alternarMenuFlotante()">⚙ Visualización</button>
-            
-            <div id="floating-menu" class="floating-dropdown hidden">
-                <h3>Ajustes Visuales</h3>
+            <div class="drawer-content">
+                <!-- Tamaño partícula -->
                 <div class="input-wrapper">
                     <div class="label-container">
                         <label>Tamaño partícula</label>
                         <span id="size-val" class="value-badge">3 px</span>
                     </div>
                     <div id="size-slider-container"></div>
-                    <div class="slider-bounds">
-                        <span>1 px</span>
-                        <span>15 px</span>
-                    </div>
                 </div>
 
+                <!-- Color partículas -->
                 <div class="input-wrapper">
                     <label for="color-picker-particula">Color partículas</label>
                     <div class="color-picker-container">
@@ -145,12 +165,31 @@
                     </div>
                 </div>
 
+                <!-- Color contenedor -->
                 <div class="input-wrapper">
-                    <label for="color-picker-circulo">Color contenedor</label>
+                    <label for="color-picker-circulo">Color membrana</label>
                     <div class="color-picker-container">
                         <input type="color" id="color-picker-circulo" class="custom-color-picker" value="#ff4646">
                         <span id="color-circulo-hex-val" class="color-text">#FF4646</span>
                     </div>
+                </div>
+
+                <!-- Color del Radio Promedio -->
+                <div class="input-wrapper" id="wrapper-color-promedio">
+                    <label for="color-picker-promedio">Color línea promedio</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color-picker-promedio" class="custom-color-picker" value="#2ecc71">
+                        <span id="color-promedio-hex-val" class="color-text">#2ECC71</span>
+                    </div>
+                </div>
+
+                <!-- Formato del trazo -->
+                <div class="input-wrapper" id="wrapper-format-promedio">
+                    <label for="select-formato-promedio">Formato línea promedio</label>
+                    <select id="select-formato-promedio" class="custom-select">
+                        <option value="punteado" selected>Línea Discontinua</option>
+                        <option value="continuo">Línea Continua</option>
+                    </select>
                 </div>
                 
                 <div class="input-wrapper checked-wrapper">
@@ -158,14 +197,18 @@
                     <label for="check-termografico">Color según velocidad</label>
                 </div>
 
+                <!-- Control de visibilidad de la gráfica P-V -->
+<div class="input-wrapper checked-wrapper">
+    <input type="checkbox" id="check-mostrar-grafica">
+    <label for="check-mostrar-grafica">Mostrar gráfica P-V</label>
+</div>
+
                 <div class="input-wrapper checked-wrapper">
                     <input type="checkbox" id="check-fullscreen">
                     <label for="check-fullscreen">Pantalla completa</label>
                 </div>
             </div>
-
-            <div id="canvas-container"></div>
-        </main>
+        </aside>
     </div>
     <script src="js/sketch.js"></script>
 </body>
