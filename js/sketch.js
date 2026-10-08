@@ -31,6 +31,7 @@ let ultimoTiempoMedido = 0;
 let impulsoEnEsteSegundo = 0;
 let impulsoPorSegundo = 0;
 const K_PRESION = 4;   // calibra la escala en atm (≈ la de antes a 273 K)
+const LITROS_POR_PX2 = 5.0 / (Math.PI * 220 * 220);
 
 // Variables de control para el promedio acumulado de la gráfica (Cada 3 segundos)
 let ultimoTiempoGrafica = 0;
@@ -208,7 +209,8 @@ function draw() {
         temperaturaAnterior = temperaturaActualInt;
     }
     
-    let volumenLitros = map(areaPoligono, PI*25*25, PI*220*220, 0.5, 5.0, true);
+    // V ∝ área (recta que pasa por el origen): 5 L con el radio máximo (220 px)
+    let volumenLitros = areaPoligono * LITROS_POR_PX2;
     let perimetroEstimado = TWO_PI * radioMedioObservado;
     let presionAtm = (impulsoPorSegundo * K_PRESION) / perimetroEstimado;
     if (temperaturaActualInt === 0) presionAtm = 0; 
@@ -225,10 +227,8 @@ function draw() {
         if (cantidadMuestrasFrame > 0) {
             let mediaPresion = sumaPresionParaMedia / cantidadMuestrasFrame; 
             let mediaArea = sumaVolumenParaMedia / cantidadMuestrasFrame;
-            historialPuntos.push({
-                v: map(mediaArea, PI*25*25, PI*220*220, 50, 200),
-                p: map(mediaPresion * perimetroEstimado / 15, 0, 300, 500, 390) 
-            });
+            // Se guardan P (atm) y V (L); la escala se calcula al dibujar
+            historialPuntos.push({ v: mediaArea * LITROS_POR_PX2, p: mediaPresion });
             if (historialPuntos.length > 35) historialPuntos.shift();
         }
         sumaPresionParaMedia = 0; sumaVolumenParaMedia = 0; cantidadMuestrasFrame = 0;
@@ -365,16 +365,25 @@ function dibujarPlanoCartesiano() {
     for(let x = 80; x < 200; x += 35)  line(x, 380, x, 500);
     for(let y = 410; y < 500; y += 30) line(50, y, 200, y);
     stroke(120); strokeWeight(1.5); line(50, 380, 50, 500); line(50, 500, 200, 500); 
-    noStroke(); fill(180); textSize(11); textAlign(CENTER, CENTER); text("V", 208, 500); text("P", 50, 370);
+    noStroke(); fill(180); textSize(11); textAlign(CENTER, CENTER); text("V (L)", 196, 488); text("P (atm)", 62, 370);
     //textSize(9); fill(100); textAlign(LEFT); text("GRÁFICA TERMODINÁMICA (3s)", 55, 392);
     
+    // Ejes desde 0: V de 0 a 5 L; P de 0 al máximo reciente (redondeado hacia arriba)
+    let pMax = 2;
+    for (let pt of historialPuntos) pMax = max(pMax, ceil(pt.p * 1.2));
+    let xDe = (v) => constrain(map(v, 0, 5, 50, 200), 50, 200);
+    let yDe = (p) => constrain(map(p, 0, pMax, 500, 385), 380, 500);
+    noStroke(); fill(110); textSize(9);
+    textAlign(RIGHT, CENTER); text(pMax, 46, 385); text('0', 46, 500);
+    textAlign(CENTER, TOP); text('5', 200, 503);
+
     noFill(); stroke(0, 200, 255); strokeWeight(2); beginShape();
-    for (let i = 0; i < historialPuntos.length; i++) { vertex(constrain(historialPuntos[i].v, 50, 200), constrain(historialPuntos[i].p, 380, 500)); }
+    for (let i = 0; i < historialPuntos.length; i++) { vertex(xDe(historialPuntos[i].v), yDe(historialPuntos[i].p)); }
     endShape();
     
     if (historialPuntos.length > 0) {
         let uP = historialPuntos[historialPuntos.length - 1];
-        let px = constrain(uP.v, 50, 200); let py = constrain(uP.p, 380, 500);
+        let px = xDe(uP.v); let py = yDe(uP.p);
         stroke(0, 200, 255, 90); strokeWeight(1); drawingContext.setLineDash([4, 4]);
         line(px, py, 50, py); line(px, py, px, 500); drawingContext.setLineDash([]);
         fill(255, 200, 0); noStroke(); circle(px, py, 7);
