@@ -6,10 +6,23 @@ let velocidadesNodos = [];        // Componentes de velocidad {x, y}
 let fuerzasNodos = [];            // Componentes de fuerza {x, y}
 
 // Parámetros Físicos Ajustados (Menor Rigidez y Radio Inicial)
-let radioOriginalReposito = 90;   // Radio de reposo del globo (no cambia)
+let radioOriginalReposito = 90;   // Radio inicial del globo
 let radioParedFija = 90;          // Radio de la pared rígida (botones «Radio del Contenedor»)
 let kEstructuraMalla = 0.15;      // Cohesión elástica lateral entre nodos contiguos
-let kRecuperacionForma = 0.02;    // Paredes menos rígidas (tensión de látex reducida)
+// La membrana no tiene forma propia: la atmósfera la empuja hacia dentro con
+// una presión constante (1 atm) y el globo se infla hasta que la presión del
+// gas iguala a la de fuera. Así, a presión constante, V ∝ T (ley de Charles)
+// y V ∝ N. Solo cerca de los topes actúa un muelle: el látex no se deja
+// estirar más allá del lienzo ni el globo se aplasta del todo a 0 K.
+const P_ATMOSFERA = 1.0;          // atm, presión exterior sobre el globo
+// Velocidad que una presión de 1 atm comunica a un nodo por fotograma y por px
+// de membrana. Sale de cómo se mide la presión en este archivo: cada choque
+// reparte 1,6·(1 + 2·0,6 + 2·0,3) = 4,48·v_normal entre 5 nodos y
+// P = impulso/s · K_PRESION / perímetro, con impulso = 2·v_normal a 60 fps.
+const K_EMPUJE_EXTERIOR = 4.48 / (2 * 60 * 4);   // 4 = K_PRESION
+const RADIO_MIN_GLOBO = 28, RADIO_MAX_GLOBO = 235;
+const K_TOPE = 0.08;
+const K_REDONDEZ = 0.03;
 let amortiguacionMalla = 0.86;    // Filtro viscoso de estabilidad
 let radioMedioObservado = 90;     // Métrica de cálculo en tiempo real
 
@@ -249,12 +262,23 @@ function draw() {
             
             let nIzq = posicionesNodos[(i - 1 + numNodos) % numNodos];
             let nDer = posicionesNodos[(i + 1) % numNodos];
-            let fMuelleX = (nIzq.x - nAct.x) * kEstructuraMalla + (nDer.x - nAct.x) * kEstructuraMalla;
-            let fMuelleY = (nIzq.y - nAct.y) * kEstructuraMalla + (nDer.y - nAct.y) * kEstructuraMalla;
+            // Cohesión: cada nodo tiende al radio medio de sus vecinos. Alisa los
+            // bultos sin tirar del globo hacia dentro (en un círculo no hace nada),
+            // así la única presión exterior es la de la atmósfera.
+            let rVecinos = (dist(centroX, centroY, nIzq.x, nIzq.y) + dist(centroX, centroY, nDer.x, nDer.y)) / 2;
+            // Además, una tendencia suave al radio medio mantiene el globo redondo
+            // (tampoco cambia la presión: suma cero a lo largo de la membrana).
+            let fRadial = (rVecinos - distCentro) * 2 * kEstructuraMalla + (radioMedioObservado - distCentro) * K_REDONDEZ;
+            let fMuelleX = nx * fRadial;
+            let fMuelleY = ny * fRadial;
             
-            let deltaRadioReposito = distCentro - radioOriginalReposito;
-            let fRestauracionX = -nx * deltaRadioReposito * kRecuperacionForma;
-            let fRestauracionY = -ny * deltaRadioReposito * kRecuperacionForma;
+            // Empuje de la atmósfera, proporcional al trozo de membrana del nodo
+            let tramo = (dist(nAct.x, nAct.y, nIzq.x, nIzq.y) + dist(nAct.x, nAct.y, nDer.x, nDer.y)) / 2;
+            let empujeExterior = K_EMPUJE_EXTERIOR * P_ATMOSFERA * tramo;
+            if (distCentro > RADIO_MAX_GLOBO) empujeExterior += (distCentro - RADIO_MAX_GLOBO) * K_TOPE;
+            if (distCentro < RADIO_MIN_GLOBO) empujeExterior -= (RADIO_MIN_GLOBO - distCentro) * K_TOPE;
+            let fRestauracionX = -nx * empujeExterior;
+            let fRestauracionY = -ny * empujeExterior;
             
             let fTotalAcumuladaX = fMuelleX + fRestauracionX; let fTotalAcumuladaY = fMuelleY + fRestauracionY;
             let fuerzaProyectadaEscalar = (fTotalAcumuladaX * nx) + (fTotalAcumuladaY * ny);
