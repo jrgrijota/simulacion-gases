@@ -231,10 +231,10 @@ function draw() {
     if (temperaturaActualInt === 0) presionAtm = 0; 
     
     if (mFrecuencia) mFrecuencia.html(choquesPorSegundo);
-    if (mRadio) mRadio.html(nf(radioMedioObservado, 3, 1));
+    if (mRadio) mRadio.html(nf(radioMedioObservado, 3, 1).replace('.', ','));
     if (mTotales) mTotales.html(totalChoques);
-    if (mPresionFisica) mPresionFisica.html(nf(presionAtm, 1, 2));
-    if (mVolumenFisico) mVolumenFisico.html(nf(volumenLitros, 1, 2));
+    if (mPresionFisica) mPresionFisica.html(nf(presionAtm, 1, 2).replace('.', ','));
+    if (mVolumenFisico) mVolumenFisico.html(nf(volumenLitros, 1, 2).replace('.', ','));
     
     sumaPresionParaMedia += presionAtm; sumaVolumenParaMedia += areaPoligono; cantidadMuestrasFrame++;
 
