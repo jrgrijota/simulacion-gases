@@ -6,7 +6,8 @@ let velocidadesNodos = [];        // Componentes de velocidad {x, y}
 let fuerzasNodos = [];            // Componentes de fuerza {x, y}
 
 // Parámetros Físicos Ajustados (Menor Rigidez y Radio Inicial)
-let radioOriginalReposito = 90;   // Radio inicial menor para favorecer expansión
+let radioOriginalReposito = 90;   // Radio de reposo del globo (no cambia)
+let radioParedFija = 90;          // Radio de la pared rígida (botones «Radio del Contenedor»)
 let kEstructuraMalla = 0.15;      // Cohesión elástica lateral entre nodos contiguos
 let kRecuperacionForma = 0.02;    // Paredes menos rígidas (tensión de látex reducida)
 let amortiguacionMalla = 0.86;    // Filtro viscoso de estabilidad
@@ -268,8 +269,8 @@ function draw() {
     } else {
         for (let i = 0; i < numNodos; i++) {
             let angulo = map(i, 0, numNodos, 0, TWO_PI);
-            posicionesNodos[i].x = centroX + cos(angulo) * radioOriginalReposito;
-            posicionesNodos[i].y = centroY + sin(angulo) * radioOriginalReposito;
+            posicionesNodos[i].x = centroX + cos(angulo) * radioParedFija;
+            posicionesNodos[i].y = centroY + sin(angulo) * radioParedFija;
             velocidadesNodos[i].x = 0; velocidadesNodos[i].y = 0;
         }
     }
@@ -394,9 +395,11 @@ function actualizarModoPared() {
     if (!selectPared) return;
     modoPared = selectPared.value();
     if (modoPared === 'fija') {
-        radioOriginalReposito = constrain(int(radioMedioObservado), 30, 210);
+        // La pared rígida se fija en el tamaño que tenía el globo; el radio de
+        // reposo del globo no se toca, así que al volver a «Membrana» recupera su forma
+        radioParedFija = constrain(int(radioMedioObservado), 30, 210);
         if (wrapperRadioManual) wrapperRadioManual.removeClass('hidden');
-        if (elemRadioView) elemRadioView.html(int(radioOriginalReposito));
+        if (elemRadioView) elemRadioView.html(int(radioParedFija));
         if (wrapperColorPromedio) wrapperColorPromedio.addClass('hidden');
         if (wrapperFormatPromedio) wrapperFormatPromedio.addClass('hidden');
     } else { 
@@ -405,6 +408,14 @@ function actualizarModoPared() {
         if (wrapperFormatPromedio) wrapperFormatPromedio.removeClass('hidden');
     }
     historialPuntos = []; 
+}
+
+// Botones «Radio del Contenedor» (solo con pared rígida): comprimir o expandir
+// a temperatura constante para comprobar la ley de Boyle (P·V = constante).
+function ajustarRadioManual(cambio) {
+    if (!simulacionActiva || modoPared !== 'fija') return;
+    radioParedFija = constrain(radioParedFija + cambio, 30, 210);
+    if (elemRadioView) elemRadioView.html(int(radioParedFija));
 }
 
 function comprobarParedesLocalesPuras(p) {
@@ -481,7 +492,7 @@ function resolverChoquesParticulas() {
 function gestionarParticulas(cantidadObjetivo, tempActual) {
     while (particulas.length < cantidadObjetivo) {
         let anguloPos = random(0, TWO_PI);
-        let distanciaAleatoria = random(0, max(5, radioOriginalReposito - radioParticula - 10));
+        let distanciaAleatoria = random(0, max(5, radioMedioObservado - radioParticula - 10));
         let magnitudVel = 0; let anguloVel = random(0, TWO_PI);
         if (tempActual > 0) magnitudVel = random(1.5, 3.5) * sqrt(tempActual / 300);
         particulas.push({
