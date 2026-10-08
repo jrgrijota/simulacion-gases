@@ -26,8 +26,9 @@ const K_REDONDEZ = 0.03;
 let amortiguacionMalla = 0.86;    // Filtro viscoso de estabilidad
 let radioMedioObservado = 90;     // Métrica de cálculo en tiempo real
 
-// Propiedades de las partículas (Dinamizadas a 3px de inicio)
-let radioParticula = 3;    
+// Propiedades de las partículas: 2 px de inicio, para que el volumen propio
+// de las partículas apenas cuente y se cumplan las leyes de los gases
+let radioParticula = 2;
 let colorParticulaHex = "#00c8ff";
 let colorCirculoHex = "#ff4646";
 let colorPromedioHex = "#2ecc71"; 
@@ -88,7 +89,7 @@ function setup() {
     sliderTemperatura = createSlider(0, 500, 273, 1);
     sliderTemperatura.parent('temp-slider-container');
     
-    sliderTamaño = createSlider(1, 15, 3, 1); 
+    sliderTamaño = createSlider(1, 15, 2, 1); 
     sliderTamaño.parent('size-slider-container');
     
     // Mapear elementos del DOM
