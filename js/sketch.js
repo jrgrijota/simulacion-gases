@@ -25,6 +25,12 @@ let totalChoques = 0;
 let choquesEnEsteSegundo = 0;
 let choquesPorSegundo = 0;
 let ultimoTiempoMedido = 0; 
+// Impulso transmitido a la pared (Σ 2·v_normal de cada choque): la presión es
+// impulso / tiempo / perímetro, así que crece con el número de choques Y con
+// lo fuerte que es cada uno (P ∝ N·v² ∝ T, ley de Gay-Lussac).
+let impulsoEnEsteSegundo = 0;
+let impulsoPorSegundo = 0;
+const K_PRESION = 4;   // calibra la escala en atm (≈ la de antes a 273 K)
 
 // Variables de control para el promedio acumulado de la gráfica (Cada 3 segundos)
 let ultimoTiempoGrafica = 0;
@@ -180,7 +186,9 @@ function draw() {
     radioMedioObservado /= numNodos;
 
     if (millis() - ultimoTiempoMedido >= 1000) {
-        choquesPorSegundo = choquesEnEsteSegundo; choquesEnEsteSegundo = 0; ultimoTiempoMedido = millis();
+        choquesPorSegundo = choquesEnEsteSegundo; choquesEnEsteSegundo = 0;
+        impulsoPorSegundo = impulsoEnEsteSegundo; impulsoEnEsteSegundo = 0;
+        ultimoTiempoMedido = millis();
     }
     
     if (temperaturaActualInt !== temperaturaAnterior) {
@@ -202,7 +210,7 @@ function draw() {
     
     let volumenLitros = map(areaPoligono, PI*25*25, PI*220*220, 0.5, 5.0, true);
     let perimetroEstimado = TWO_PI * radioMedioObservado;
-    let presionAtm = (choquesPorSegundo * 15) / perimetroEstimado;
+    let presionAtm = (impulsoPorSegundo * K_PRESION) / perimetroEstimado;
     if (temperaturaActualInt === 0) presionAtm = 0; 
     
     if (mFrecuencia) mFrecuencia.html(choquesPorSegundo);
@@ -403,6 +411,7 @@ function comprobarParedesLocalesPuras(p) {
         let productoEscalar = p.vx * nx + p.vy * ny;
         if (productoEscalar > 0) {
             totalChoques++; choquesEnEsteSegundo++;
+            impulsoEnEsteSegundo += 2 * productoEscalar;
             if (modoPared === 'flexible') {
                 let fImpulsoX = nx * productoEscalar * 1.6; let fImpulsoY = ny * productoEscalar * 1.6;
                 velocidadesNodos[indiceNodo].x += fImpulsoX; velocidadesNodos[indiceNodo].y += fImpulsoY;
