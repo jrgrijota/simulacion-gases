@@ -424,7 +424,7 @@ function actualizarModoPared() {
         // reposo del globo no se toca, así que al volver a «Membrana» recupera su forma
         radioParedFija = constrain(int(radioMedioObservado), 30, 210);
         if (wrapperRadioManual) wrapperRadioManual.removeClass('hidden');
-        if (elemRadioView) elemRadioView.html(int(radioParedFija));
+        mostrarVolumenPared();
         if (wrapperColorPromedio) wrapperColorPromedio.addClass('hidden');
         if (wrapperFormatPromedio) wrapperFormatPromedio.addClass('hidden');
     } else { 
@@ -437,10 +437,18 @@ function actualizarModoPared() {
 
 // Botones «Radio del Contenedor» (solo con pared rígida): comprimir o expandir
 // a temperatura constante para comprobar la ley de Boyle (P·V = constante).
+// Con pared rígida se muestra el volumen (L), que es la magnitud de las leyes
+// de los gases, no el radio en píxeles del dibujo.
+function mostrarVolumenPared() {
+    if (!elemRadioView) return;
+    let litros = Math.PI * radioParedFija * radioParedFija * LITROS_POR_PX2;
+    elemRadioView.html(nf(litros, 1, 2).replace('.', ','));
+}
+
 function ajustarRadioManual(cambio) {
     if (!simulacionActiva || modoPared !== 'fija') return;
     radioParedFija = constrain(radioParedFija + cambio, 30, 210);
-    if (elemRadioView) elemRadioView.html(int(radioParedFija));
+    mostrarVolumenPared();
 }
 
 function comprobarParedesLocalesPuras(p) {
