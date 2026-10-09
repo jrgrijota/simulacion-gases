@@ -372,12 +372,12 @@ function ajustarTemperaturaBotones(cambio) {
 }
 function sincronizarEscalaTermica() {
     renderizarValorTemperatura(); if (!lblTempMin || !lblTempMax) return;
-    if (checkEscalaTemp && checkEscalaTemp.checked()) { lblTempMin.html("-273 ºC"); lblTempMax.html("227 ºC"); }
+    if (checkEscalaTemp && checkEscalaTemp.checked()) { lblTempMin.html("-273 °C"); lblTempMax.html("227 °C"); }
     else { lblTempMin.html("0 K"); lblTempMax.html("500 K"); }
 }
 function renderizarValorTemperatura() {
     if (!inputDirectTemp || !elemUnidadView) return;
-    if (checkEscalaTemp && checkEscalaTemp.checked()) { inputDirectTemp.value(temperaturaActualInt - 273); elemUnidadView.html("ºC"); }
+    if (checkEscalaTemp && checkEscalaTemp.checked()) { inputDirectTemp.value(temperaturaActualInt - 273); elemUnidadView.html("°C"); }
     else { inputDirectTemp.value(temperaturaActualInt); elemUnidadView.html("K"); }
 }
 function actualizarEstiloSliderTemperatura() {
