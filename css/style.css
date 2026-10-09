@@ -253,7 +253,7 @@ input:checked + .slider-toggle:before {
 
 .stepper-display .unit {
     font-size: 0.8rem;
-    color: #666;
+    color: #9ab;
     margin-left: 2px;
 }
 
@@ -357,7 +357,7 @@ input:checked + .slider-toggle:before {
 .card.Highlight { border-left: 3px solid #00c8ff; }
 .card h3 { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
 .metric { font-size: 1.3rem; font-weight: 700; color: #ffffff; font-family: monospace; }
-.metric small { font-size: 0.75rem; color: #444; }
+.metric small { font-size: 0.85rem; color: #9ab; }   /* las unidades se tienen que leer */
 .metric-secondary { font-size: 1rem; font-weight: 600; color: #888; font-family: monospace; }
 
 /* Área de Simulación */
@@ -465,7 +465,7 @@ input:checked + .slider-toggle:before { transform: translateX(14px); background-
 .custom-select { background-color: #252525; border: 1px solid #2d2d2d; color: #ffffff; padding: 8px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; width: 100%; outline: none; }
 .stepper-container { display: flex; align-items: center; background-color: #252525; border-radius: 8px; padding: 4px 6px; border: 1px solid #2d2d2d; justify-content: space-between; }
 .stepper-display { color: #ffffff; font-size: 1.2rem; font-weight: 700; font-family: monospace; display: flex; align-items: center; justify-content: center; gap: 2px; }
-.stepper-display .unit { font-size: 0.8rem; color: #666; margin-left: 2px; }
+.stepper-display .unit { font-size: 0.85rem; color: #9ab; margin-left: 2px; }
 .stepper-btn { background-color: #333333; border: none; color: #ffffff; font-size: 1.1rem; width: 36px; height: 36px; border-radius: 6px; cursor: pointer; }
 .divider { border: 0; height: 1px; background: #2d2d2d; }
 
@@ -486,7 +486,7 @@ input:checked + .slider-toggle:before { transform: translateX(14px); background-
 .details-content { padding: 10px; display: flex; flex-direction: column; gap: 10px; background-color: #1a1a1a; border-top: 1px solid #2d2d2d; }
 .card.Highlight { border-left: 3px solid #00c8ff; }
 .metric { font-size: 1.3rem; font-weight: 700; color: #ffffff; font-family: monospace; }
-.metric small { font-size: 0.75rem; color: #444; }
+.metric small { font-size: 0.85rem; color: #9ab; }   /* las unidades se tienen que leer */
 .metric-secondary { font-size: 1rem; font-weight: 600; color: #888; font-family: monospace; }
 
 /* Área de Simulación */
