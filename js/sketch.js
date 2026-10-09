@@ -45,6 +45,7 @@ let ultimoTiempoMedido = 0;
 // lo fuerte que es cada uno (P ∝ N·v² ∝ T, ley de Gay-Lussac).
 let impulsoEnEsteSegundo = 0;
 let impulsoPorSegundo = 0;
+let impulsosRecientes = [];
 const K_PRESION = 4;   // calibra la escala en atm (≈ la de antes a 273 K)
 const LITROS_POR_PX2 = 5.0 / (Math.PI * 220 * 220);
 
@@ -203,7 +204,11 @@ function draw() {
 
     if (millis() - ultimoTiempoMedido >= 1000) {
         choquesPorSegundo = choquesEnEsteSegundo; choquesEnEsteSegundo = 0;
-        impulsoPorSegundo = impulsoEnEsteSegundo; impulsoEnEsteSegundo = 0;
+        // La presión es la media de los últimos 3 s: con un solo segundo de
+        // choques saltaba varias décimas y no se podía leer un valor estable
+        impulsosRecientes.push(impulsoEnEsteSegundo); impulsoEnEsteSegundo = 0;
+        if (impulsosRecientes.length > 3) impulsosRecientes.shift();
+        impulsoPorSegundo = impulsosRecientes.reduce((a, b) => a + b, 0) / impulsosRecientes.length;
         ultimoTiempoMedido = millis();
     }
     
