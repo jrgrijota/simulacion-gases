@@ -444,7 +444,7 @@ function actualizarModoPared() {
 // a temperatura constante para comprobar la ley de Boyle (P·V = constante).
 // Con pared rígida se muestra el volumen (L), que es la magnitud de las leyes
 // de los gases, no el radio en píxeles del dibujo.
-// Coma decimal en español; en inglés (?lang=en) se deja el punto
+// Coma decimal en español y catalán; en inglés (?lang=en) se deja el punto
 function conComaDecimal(texto) {
     return i18n.lang === 'en' ? texto : texto.replace('.', ',');
 }
