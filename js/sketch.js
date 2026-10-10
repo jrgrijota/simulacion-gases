@@ -236,10 +236,10 @@ function draw() {
     if (temperaturaActualInt === 0) presionAtm = 0; 
     
     if (mFrecuencia) mFrecuencia.html(choquesPorSegundo);
-    if (mRadio) mRadio.html(nf(radioMedioObservado, 3, 1).replace('.', ','));
+    if (mRadio) mRadio.html(conComaDecimal(nf(radioMedioObservado, 3, 1)));
     if (mTotales) mTotales.html(totalChoques);
-    if (mPresionFisica) mPresionFisica.html(nf(presionAtm, 1, 2).replace('.', ','));
-    if (mVolumenFisico) mVolumenFisico.html(nf(volumenLitros, 1, 2).replace('.', ','));
+    if (mPresionFisica) mPresionFisica.html(conComaDecimal(nf(presionAtm, 1, 2)));
+    if (mVolumenFisico) mVolumenFisico.html(conComaDecimal(nf(volumenLitros, 1, 2)));
     
     sumaPresionParaMedia += presionAtm; sumaVolumenParaMedia += areaPoligono; cantidadMuestrasFrame++;
 
@@ -444,10 +444,15 @@ function actualizarModoPared() {
 // a temperatura constante para comprobar la ley de Boyle (P·V = constante).
 // Con pared rígida se muestra el volumen (L), que es la magnitud de las leyes
 // de los gases, no el radio en píxeles del dibujo.
+// Coma decimal en español; en inglés (?lang=en) se deja el punto
+function conComaDecimal(texto) {
+    return i18n.lang === 'en' ? texto : texto.replace('.', ',');
+}
+
 function mostrarVolumenPared() {
     if (!elemRadioView) return;
     let litros = Math.PI * radioParedFija * radioParedFija * LITROS_POR_PX2;
-    elemRadioView.html(nf(litros, 1, 2).replace('.', ','));
+    elemRadioView.html(conComaDecimal(nf(litros, 1, 2)));
 }
 
 function ajustarRadioManual(cambio) {
@@ -490,8 +495,8 @@ function alternarReproduccion() {
     if (!btnPlayPause) return;
     simulacionActiva = !simulacionActiva;
     if (simulacionActiva) {
-        btnPlayPause.html("⏸ Pausar"); btnPlayPause.removeClass("estado-pausado"); loop(); 
-    } else { btnPlayPause.html("▶ Reanudar"); btnPlayPause.addClass("estado-pausado"); noLoop(); }
+        btnPlayPause.html(i18n.t("⏸ Pausar")); btnPlayPause.removeClass("estado-pausado"); loop(); 
+    } else { btnPlayPause.html(i18n.t("▶ Reanudar")); btnPlayPause.addClass("estado-pausado"); noLoop(); }
 }
 
 function alternarPantallaCompleta() {
