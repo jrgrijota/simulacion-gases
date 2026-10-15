@@ -44,5 +44,7 @@ window.I18N_EN = {
   'Línea Discontinua': 'Dashed Line',
   'Línea Continua': 'Solid Line',
   'Color según velocidad': 'Colour by speed',
-  'Pantalla completa': 'Full screen'
+  'Pantalla completa': 'Full screen',
+  // Sello de la zona de simulación (js/sello.js)
+  'Más simulaciones en simulaciencia.es': 'More simulations at simulaciencia.es'
 };
