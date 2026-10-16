@@ -32,14 +32,14 @@
                 <!-- Cantidad de partículas -->
                 <div class="input-wrapper">
                     <div class="label-container">
-                        <label>Cantidad de partículas</label>
+                        <label for="input-direct-particles">Cantidad de partículas</label>
                     </div>
                     <div class="stepper-container">
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <button type="button" class="stepper-btn" aria-label="Quitar partículas" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
                         <div class="stepper-display">
                             <input type="number" id="input-direct-particles" class="input-inline-editable" value="50" min="1" max="500">
                         </div>
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
+                        <button type="button" class="stepper-btn" aria-label="Añadir partículas" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
                     </div>
                     <div id="particle-slider-container"></div>
                     <div class="slider-bounds">
@@ -51,23 +51,23 @@
                 <!-- Temperatura -->
                 <div class="input-wrapper">
                     <div class="label-container">
-                        <label>Temperatura</label>
+                        <label for="input-direct-temp">Temperatura</label>
                         <div class="scale-toggle">
                             <span class="toggle-label">K</span>
                             <label class="switch">
-                                <input type="checkbox" id="check-escala-temp">
+                                <input type="checkbox" id="check-escala-temp" aria-label="Temperatura en °C">
                                 <span class="slider-toggle round"></span>
                             </label>
                             <span class="toggle-label">°C</span>
                         </div>
                     </div>
                     <div class="stepper-container">
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <button type="button" class="stepper-btn" aria-label="Bajar la temperatura" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
                         <div class="stepper-display">
                             <input type="number" id="input-direct-temp" class="input-inline-editable" value="273" min="0" max="500">
                             <span id="unit-temp-view" class="unit">K</span>
                         </div>
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
+                        <button type="button" class="stepper-btn" aria-label="Subir la temperatura" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
                     </div>
                     <div id="temp-slider-container"></div>
                     <div class="slider-bounds">
@@ -82,7 +82,7 @@
             <section class="control-group">
                 <h2>Comportamiento de recipiente</h2>
                 <div class="input-wrapper">
-                    <select id="select-pared" class="custom-select">
+                    <select id="select-pared" class="custom-select" aria-label="Comportamiento de recipiente">
                         <option value="flexible" selected>Membrana Flexible (Globo)</option>
                         <option value="fija">Pared Rígida (Fija)</option>
                     </select>
@@ -91,12 +91,12 @@
                 <div id="wrapper-radio-manual" class="input-wrapper hidden">
                     <label>Volumen del recipiente</label>
                     <div class="stepper-container">
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <button type="button" class="stepper-btn" aria-label="Reducir el volumen" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
                         <div class="stepper-display">
                             <span id="input-radio-view">1,15</span>
                             <span class="unit">L</span>
                         </div>
-                        <button class="stepper-btn" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
+                        <button type="button" class="stepper-btn" aria-label="Aumentar el volumen" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
                     </div>
                 </div>
             </section>

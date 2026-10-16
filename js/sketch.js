@@ -85,12 +85,15 @@ function setup() {
     inicializarMembranaPura();
     
     sliderParticulas = createSlider(1, 500, 50, 1);
+    sliderParticulas.attribute('aria-label', i18n.t('Cantidad de partículas'));
     sliderParticulas.parent('particle-slider-container');
     
     sliderTemperatura = createSlider(0, 500, 273, 1);
+    sliderTemperatura.attribute('aria-label', i18n.t('Temperatura'));
     sliderTemperatura.parent('temp-slider-container');
     
     sliderTamaño = createSlider(1, 15, 2, 1); 
+    sliderTamaño.attribute('aria-label', i18n.t('Tamaño partícula'));
     sliderTamaño.parent('size-slider-container');
     
     // Mapear elementos del DOM

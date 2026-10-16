@@ -45,6 +45,14 @@ window.I18N_CA = {
   'Línea Continua': 'Línia Contínua',
   'Color según velocidad': 'Color segons la velocitat',
   'Pantalla completa': 'Pantalla completa',
+  // Nombres de controles para lectores de pantalla
+  'Temperatura en °C': 'Temperatura en °C',
+  'Quitar partículas': 'Treu partícules',
+  'Añadir partículas': 'Afegeix partícules',
+  'Bajar la temperatura': 'Abaixa la temperatura',
+  'Subir la temperatura': 'Puja la temperatura',
+  'Reducir el volumen': 'Redueix el volum',
+  'Aumentar el volumen': 'Augmenta el volum',
   // Sello de la zona de simulación (js/sello.js)
   'Más simulaciones en simulaciencia.es': 'Més simulacions a simulaciencia.es'
 };
