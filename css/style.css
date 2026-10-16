@@ -39,7 +39,7 @@ header h1 {
 
 .subtitle {
     font-size: 0.8rem;
-    color: #888;
+    color: #8c8c8c;
     margin-top: 2px;
 }
 
@@ -120,7 +120,7 @@ h2 {
 .toggle-label {
     font-size: 0.75rem;
     font-weight: bold;
-    color: #666;
+    color: #8c8c8c;
 }
 
 .switch {
@@ -213,7 +213,7 @@ input:checked + .slider-toggle:before {
     display: flex;
     justify-content: space-between;
     font-size: 0.7rem;
-    color: #666;
+    color: #8c8c8c;
 }
 
 /* Selectores desplegables estándar */
@@ -355,10 +355,10 @@ input:checked + .slider-toggle:before {
 
 .details-content .card { background-color: #222222; border: 1px solid #2d2d2d; border-radius: 6px; padding: 10px; }
 .card.Highlight { border-left: 3px solid #00c8ff; }
-.card h3 { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.card h3 { font-size: 0.7rem; color: #8c8c8c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
 .metric { font-size: 1.3rem; font-weight: 700; color: #ffffff; font-family: monospace; }
 .metric small { font-size: 0.85rem; color: #9ab; }   /* las unidades se tienen que leer */
-.metric-secondary { font-size: 1rem; font-weight: 600; color: #888; font-family: monospace; }
+.metric-secondary { font-size: 1rem; font-weight: 600; color: #8c8c8c; font-family: monospace; }
 
 /* Área de Simulación */
 .simulation-panel {
@@ -427,7 +427,7 @@ body {
 }
 
 header h1 { font-size: 1.3rem; color: #ffffff; font-weight: 700; }
-.subtitle { font-size: 0.8rem; color: #888; margin-top: 2px; }
+.subtitle { font-size: 0.8rem; color: #8c8c8c; margin-top: 2px; }
 h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: #00c8ff; margin-bottom: 4px; }
 .control-group { display: flex; flex-direction: column; gap: 12px; }
 .input-wrapper { display: flex; flex-direction: column; gap: 6px; }
@@ -445,7 +445,7 @@ h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color:
 
 /* Selector de escala de temperatura */
 .scale-toggle { display: flex; align-items: center; gap: 6px; }
-.toggle-label { font-size: 0.75rem; font-weight: bold; color: #666; }
+.toggle-label { font-size: 0.75rem; font-weight: bold; color: #8c8c8c; }
 .switch { position: relative; display: inline-block; width: 32px; height: 18px; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2a2a2a; transition: .2s; border: 1px solid #3d3d3d; }
@@ -460,7 +460,7 @@ input:checked + .slider-toggle:before { transform: translateX(14px); background-
 #temp-slider-container input { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; outline: none; cursor: pointer; margin: 6px 0; }
 #temp-slider-container input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #ffffff; border: 1px solid #121212; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
 #temp-slider-container input::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #ffffff; border: 1px solid #121212; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
-.slider-bounds { display: flex; justify-content: space-between; font-size: 0.7rem; color: #666; }
+.slider-bounds { display: flex; justify-content: space-between; font-size: 0.7rem; color: #8c8c8c; }
 
 .custom-select { background-color: #252525; border: 1px solid #2d2d2d; color: #ffffff; padding: 8px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; width: 100%; outline: none; }
 .stepper-container { display: flex; align-items: center; background-color: #252525; border-radius: 8px; padding: 4px 6px; border: 1px solid #2d2d2d; justify-content: space-between; }
@@ -487,7 +487,7 @@ input:checked + .slider-toggle:before { transform: translateX(14px); background-
 .card.Highlight { border-left: 3px solid #00c8ff; }
 .metric { font-size: 1.3rem; font-weight: 700; color: #ffffff; font-family: monospace; }
 .metric small { font-size: 0.85rem; color: #9ab; }   /* las unidades se tienen que leer */
-.metric-secondary { font-size: 1rem; font-weight: 600; color: #888; font-family: monospace; }
+.metric-secondary { font-size: 1rem; font-weight: 600; color: #8c8c8c; font-family: monospace; }
 
 /* Área de Simulación */
 .simulation-panel {
@@ -527,7 +527,7 @@ input:checked + .slider-toggle:before { transform: translateX(14px); background-
     display: flex; justify-content: space-between; align-items: center;
 }
 .drawer-header h2 { margin: 0; font-size: 1rem; color: #ffffff; }
-.close-drawer-btn { background: transparent; border: none; color: #888; font-size: 1.6rem; cursor: pointer; line-height: 1; }
+.close-drawer-btn { background: transparent; border: none; color: #8c8c8c; font-size: 1.6rem; cursor: pointer; line-height: 1; }
 .close-drawer-btn:hover { color: #ffffff; }
 
 .drawer-content { padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex: 1; }

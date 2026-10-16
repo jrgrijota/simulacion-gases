@@ -45,6 +45,14 @@ window.I18N_EU = {
   'Línea Continua': 'Lerro Jarraitua',
   'Color según velocidad': 'Kolorea abiaduraren arabera',
   'Pantalla completa': 'Pantaila osoa',
+  // Nombres de controles para lectores de pantalla
+  'Temperatura en °C': 'Tenperatura °C-tan',
+  'Quitar partículas': 'Kendu partikulak',
+  'Añadir partículas': 'Gehitu partikulak',
+  'Bajar la temperatura': 'Jaitsi tenperatura',
+  'Subir la temperatura': 'Igo tenperatura',
+  'Reducir el volumen': 'Txikitu bolumena',
+  'Aumentar el volumen': 'Handitu bolumena',
   // Sello de la zona de simulación (js/sello.js)
   'Más simulaciones en simulaciencia.es': 'Simulazio gehiago simulaciencia.es webgunean'
 };
