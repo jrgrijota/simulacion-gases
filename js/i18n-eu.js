@@ -44,5 +44,7 @@ window.I18N_EU = {
   'Línea Discontinua': 'Lerro Etena',
   'Línea Continua': 'Lerro Jarraitua',
   'Color según velocidad': 'Kolorea abiaduraren arabera',
-  'Pantalla completa': 'Pantaila osoa'
+  'Pantalla completa': 'Pantaila osoa',
+  // Sello de la zona de simulación (js/sello.js)
+  'Más simulaciones en simulaciencia.es': 'Simulazio gehiago simulaciencia.es webgunean'
 };

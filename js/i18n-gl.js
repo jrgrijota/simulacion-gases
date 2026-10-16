@@ -44,5 +44,7 @@ window.I18N_GL = {
   'Línea Discontinua': 'Liña Descontinua',
   'Línea Continua': 'Liña Continua',
   'Color según velocidad': 'Cor segundo a velocidade',
-  'Pantalla completa': 'Pantalla completa'
+  'Pantalla completa': 'Pantalla completa',
+  // Sello de la zona de simulación (js/sello.js)
+  'Más simulaciones en simulaciencia.es': 'Máis simulacións en simulaciencia.es'
 };
