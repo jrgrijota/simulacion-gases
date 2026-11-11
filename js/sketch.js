@@ -159,6 +159,30 @@ function setup() {
     
     actualizarEstiloSliderTemperatura();
     gestionarParticulas(sliderParticulas.value(), temperaturaActualInt);
+
+    // Ajustes de la dirección (fichas del alumnado): ver js/parametros.js.
+    // Temperatura en K. «volumen» (en L) fija el radio de la pared rígida, en
+    // pasos de 5 px como los botones.
+    aplicarParametrosUrl({
+        particulas:  urlParam.range('input-direct-particles'),
+        temperatura: urlParam.range('input-direct-temp'),
+        recipiente:  (v) => {
+            urlParam.select('select-pared')({ rigido: 'fija', 'rígido': 'fija', globo: 'flexible' }[v] || v);
+            // Al abrir, el globo aún no tiene radio medio: se parte del de reposo.
+            if (modoPared === 'fija') {
+                radioParedFija = constrain(int(radioOriginalReposito), 30, 210);
+                mostrarVolumenPared();
+            }
+        },
+        volumen:     (v) => {
+            const litros = parseFloat(v.replace(',', '.'));
+            if (!(litros > 0) || modoPared !== 'fija') return;
+            const r = Math.sqrt(litros / (Math.PI * LITROS_POR_PX2));
+            radioParedFija = constrain(Math.round(r / 5) * 5, 30, 210);
+            mostrarVolumenPared();
+        },
+        grafica:     urlParam.toggle('check-mostrar-grafica', (c) => c.checked),
+    });
 }
 
 function inicializarMembranaPura() {
