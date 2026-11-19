@@ -249,7 +249,7 @@ body:not(.theme-contrast) .theme-opt.active { border-color: var(--accent); color
    nada en el móvil). El lienzo crece en pantallas grandes (pizarra digital). */
 #canvas-container canvas {
     border-radius: 0 !important; box-shadow: none !important;
-    width: min(calc(100vw - 420px), calc((100vh - 120px) * 540 / 704), 820px) !important;
+    width: min(calc(100vw - 420px), calc((100vh - 120px) * 540 / 630), 820px) !important;
     height: auto !important; max-width: none !important; max-height: none !important;
 }
 .simulation-panel { padding: 72px 20px 48px; }

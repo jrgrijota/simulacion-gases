@@ -53,7 +53,7 @@ window.I18N_CA = {
   'Subir la temperatura': 'Puja la temperatura',
   'Reducir el volumen': 'Redueix el volum',
   'Aumentar el volumen': 'Augmenta el volum',
-  // Tema visual, fichas del lienzo y mascota (bocadillo)
+  // Tema visual y fichas del lienzo
   'Presión': 'Pressió',
   'Volumen': 'Volum',
   'Tema visual': 'Tema visual',
@@ -61,27 +61,6 @@ window.I18N_CA = {
   'Claro': 'Clar',
   'Alto contraste': 'Alt contrast',
   'Cerrar': 'Tanca',
-  'Globo': 'Globus',
-  'Pared rígida': 'Paret rígida',
-  'Más temperatura': 'Més temperatura',
-  'Menos temperatura': 'Menys temperatura',
-  'Más partículas': 'Més partícules',
-  'Menos partículas': 'Menys partícules',
-  'Más volumen': 'Més volum',
-  'Menos volumen': 'Menys volum',
-  'Las partículas están quietas: no chocan y la presión es cero.': 'Les partícules estan quietes: no xoquen i la pressió és zero.',
-  'Las partículas van más rápido y chocan más fuerte: el globo se hincha.': 'Les partícules van més de pressa i xoquen més fort: el globus s\'infla.',
-  'Las partículas van más rápido y chocan más fuerte: sube la presión.': 'Les partícules van més de pressa i xoquen més fort: puja la pressió.',
-  'Las partículas van más despacio y chocan más flojo: el globo se encoge.': 'Les partícules van més a poc a poc i xoquen més fluix: el globus s\'encongeix.',
-  'Las partículas van más despacio y chocan más flojo: baja la presión.': 'Les partícules van més a poc a poc i xoquen més fluix: baixa la pressió.',
-  'Hay más choques contra la membrana: el globo se hincha.': 'Hi ha més xocs contra la membrana: el globus s\'infla.',
-  'Hay más choques contra la pared: sube la presión.': 'Hi ha més xocs contra la paret: puja la pressió.',
-  'Hay menos choques contra la membrana: el globo se encoge.': 'Hi ha menys xocs contra la membrana: el globus s\'encongeix.',
-  'Hay menos choques contra la pared: baja la presión.': 'Hi ha menys xocs contra la paret: baixa la pressió.',
-  'Las partículas chocan más a menudo con la pared: sube la presión.': 'Les partícules xoquen més sovint amb la paret: puja la pressió.',
-  'Las partículas chocan menos a menudo con la pared: baja la presión.': 'Les partícules xoquen menys sovint amb la paret: baixa la pressió.',
-  'Los choques empujan la membrana: el globo crece hasta igualar la presión de fuera.': 'Els xocs empenyen la membrana: el globus creix fins que iguala la pressió de fora.',
-  'El volumen no cambia: la presión sale de los choques contra la pared.': 'El volum no canvia: la pressió ve dels xocs contra la paret.',
   // Sello de la zona de simulación (js/sello.js)
   'Más simulaciones en simulaciencia.es': 'Més simulacions a simulaciencia.es'
 };

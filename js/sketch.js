@@ -77,7 +77,7 @@ let checkMostrarGrafica; // NUEVO: Enlace para el checkbox de la gráfica
 
 function setup() {
     // Lienzo de 540 × 690: arriba las fichas de T, P y V; en medio el gas (540 × 540,
-    // la física trabaja en ese cuadrado); abajo la mascota con su bocadillo.
+    // la física trabaja en ese cuadrado); abajo, un margen.
     let canvas = createCanvas(CV_W, CV_H);
     canvas.parent('canvas-container');
     pixelDensity(Math.max(2, displayDensity()));   // nítido al ampliarlo en la pizarra
@@ -382,8 +382,6 @@ function draw() {
 
     const enCelsius = checkEscalaTemp && checkEscalaTemp.checked();
     dibujarFichasDatos(temperaturaActualInt, enCelsius, presionAtm, volumenLitros);
-    const cm = lerpColor(color(THEME.frio), color(THEME.caliente), constrain(temperaturaActualInt / 500, 0, 1));
-    dibujarBocadillo(mensajeMascota(), cm);
 }
 
 // Relleno del color de acento hasta la bola del deslizador (estilo juego)
@@ -427,48 +425,6 @@ function dibujarRecipiente() {
         stroke(THEME.paredBrillo); strokeWeight(2); strokeCap(ROUND);
         arc(centroX, centroY, radioParedFija * 2 - 2, radioParedFija * 2 - 2, PI * 1.1, PI * 1.45);
     }
-}
-
-// ── Lo que dice la mascota ─────────────────────────────────────────
-// Describe lo que se ve en el gas. Tras un cambio del docente (temperatura,
-// partículas o volumen) explica ese cambio durante unos segundos; si no,
-// recuerda qué hace el recipiente elegido.
-let mascotaPrev = null, mascotaEvento = null;
-const MASCOTA_DURACION = 5000;
-
-function mensajeMascota() {
-    const ahora = { T: temperaturaActualInt, N: sliderParticulas ? sliderParticulas.value() : 0, R: radioParedFija, modo: modoPared };
-    if (mascotaPrev) {
-        let tipo = null;
-        if (ahora.modo !== mascotaPrev.modo) mascotaEvento = null;
-        else if (ahora.T !== mascotaPrev.T) tipo = ahora.T > mascotaPrev.T ? 'calor' : 'frio';
-        else if (ahora.N !== mascotaPrev.N) tipo = ahora.N > mascotaPrev.N ? 'mas' : 'menos';
-        else if (ahora.modo === 'fija' && ahora.R !== mascotaPrev.R) tipo = ahora.R > mascotaPrev.R ? 'volmas' : 'volmenos';
-        if (tipo) mascotaEvento = { tipo, desde: millis() };
-    }
-    mascotaPrev = ahora;
-
-    const globo = modoPared === 'flexible';
-    const C = { calor: THEME.chipT, frio: THEME.frio, part: THEME.chipP, vol: THEME.chipV, base: THEME.curva };
-    if (temperaturaActualInt === 0) {
-        return { clave: 'cero', tag: '0 K', col: C.frio,
-                 txt: i18n.t('Las partículas están quietas: no chocan y la presión es cero.') };
-    }
-    if (mascotaEvento && millis() - mascotaEvento.desde < MASCOTA_DURACION) {
-        const t = mascotaEvento.tipo;
-        const M = {
-            calor:  { tag: 'Más temperatura', col: C.calor, txt: globo ? 'Las partículas van más rápido y chocan más fuerte: el globo se hincha.' : 'Las partículas van más rápido y chocan más fuerte: sube la presión.' },
-            frio:   { tag: 'Menos temperatura', col: C.frio, txt: globo ? 'Las partículas van más despacio y chocan más flojo: el globo se encoge.' : 'Las partículas van más despacio y chocan más flojo: baja la presión.' },
-            mas:    { tag: 'Más partículas', col: C.part, txt: globo ? 'Hay más choques contra la membrana: el globo se hincha.' : 'Hay más choques contra la pared: sube la presión.' },
-            menos:  { tag: 'Menos partículas', col: C.part, txt: globo ? 'Hay menos choques contra la membrana: el globo se encoge.' : 'Hay menos choques contra la pared: baja la presión.' },
-            volmenos: { tag: 'Menos volumen', col: C.vol, txt: 'Las partículas chocan más a menudo con la pared: sube la presión.' },
-            volmas:   { tag: 'Más volumen', col: C.vol, txt: 'Las partículas chocan menos a menudo con la pared: baja la presión.' },
-        }[t];
-        return { clave: t + (globo ? '-globo' : '-fija'), tag: i18n.t(M.tag), col: M.col, txt: i18n.t(M.txt) };
-    }
-    return globo
-        ? { clave: 'globo', tag: i18n.t('Globo'), col: C.base, txt: i18n.t('Los choques empujan la membrana: el globo crece hasta igualar la presión de fuera.') }
-        : { clave: 'fija', tag: i18n.t('Pared rígida'), col: C.base, txt: i18n.t('El volumen no cambia: la presión sale de los choques contra la pared.') };
 }
 
 // NUEVO: Función controladora del cajón derecho (Drawer UX)

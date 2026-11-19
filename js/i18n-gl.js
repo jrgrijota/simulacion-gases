@@ -53,7 +53,7 @@ window.I18N_GL = {
   'Subir la temperatura': 'Subir a temperatura',
   'Reducir el volumen': 'Reducir o volume',
   'Aumentar el volumen': 'Aumentar o volume',
-  // Tema visual, fichas del lienzo y mascota (bocadillo)
+  // Tema visual y fichas del lienzo
   'Presión': 'Presión',
   'Volumen': 'Volume',
   'Tema visual': 'Tema visual',
@@ -61,27 +61,6 @@ window.I18N_GL = {
   'Claro': 'Claro',
   'Alto contraste': 'Alto contraste',
   'Cerrar': 'Pechar',
-  'Globo': 'Globo',
-  'Pared rígida': 'Parede ríxida',
-  'Más temperatura': 'Máis temperatura',
-  'Menos temperatura': 'Menos temperatura',
-  'Más partículas': 'Máis partículas',
-  'Menos partículas': 'Menos partículas',
-  'Más volumen': 'Máis volume',
-  'Menos volumen': 'Menos volume',
-  'Las partículas están quietas: no chocan y la presión es cero.': 'As partículas están quietas: non chocan e a presión é cero.',
-  'Las partículas van más rápido y chocan más fuerte: el globo se hincha.': 'As partículas van máis rápido e chocan máis forte: o globo incha.',
-  'Las partículas van más rápido y chocan más fuerte: sube la presión.': 'As partículas van máis rápido e chocan máis forte: sobe a presión.',
-  'Las partículas van más despacio y chocan más flojo: el globo se encoge.': 'As partículas van máis amodo e chocan máis frouxo: o globo encolle.',
-  'Las partículas van más despacio y chocan más flojo: baja la presión.': 'As partículas van máis amodo e chocan máis frouxo: baixa a presión.',
-  'Hay más choques contra la membrana: el globo se hincha.': 'Hai máis choques contra a membrana: o globo incha.',
-  'Hay más choques contra la pared: sube la presión.': 'Hai máis choques contra a parede: sobe a presión.',
-  'Hay menos choques contra la membrana: el globo se encoge.': 'Hai menos choques contra a membrana: o globo encolle.',
-  'Hay menos choques contra la pared: baja la presión.': 'Hai menos choques contra a parede: baixa a presión.',
-  'Las partículas chocan más a menudo con la pared: sube la presión.': 'As partículas chocan máis a miúdo coa parede: sobe a presión.',
-  'Las partículas chocan menos a menudo con la pared: baja la presión.': 'As partículas chocan menos a miúdo coa parede: baixa a presión.',
-  'Los choques empujan la membrana: el globo crece hasta igualar la presión de fuera.': 'Os choques empurran a membrana: o globo medra ata igualar a presión de fóra.',
-  'El volumen no cambia: la presión sale de los choques contra la pared.': 'O volume non cambia: a presión vén dos choques contra a parede.',
   // Sello de la zona de simulación (js/sello.js)
   'Más simulaciones en simulaciencia.es': 'Máis simulacións en simulaciencia.es'
 };
