@@ -76,11 +76,17 @@ let wrapperColorPromedio, wrapperFormatPromedio;
 let checkMostrarGrafica; // NUEVO: Enlace para el checkbox de la gráfica
 
 function setup() {
-    let canvas = createCanvas(540, 540);
+    // Lienzo de 540 × 690: arriba las fichas de T, P y V; en medio el gas (540 × 540,
+    // la física trabaja en ese cuadrado); abajo, un margen.
+    let canvas = createCanvas(CV_W, CV_H);
     canvas.parent('canvas-container');
+    pixelDensity(Math.max(2, displayDensity()));   // nítido al ampliarlo en la pizarra
+    if (document.fonts) document.fonts.load('600 12px Fredoka');
+    updateTheme();
+    iniciarSelectorTema();
     
     centroX = width / 2;
-    centroY = height / 2;
+    centroY = FRANJA_SUP + ZONA_SIM / 2;
     
     inicializarMembranaPura();
     
@@ -198,7 +204,10 @@ function inicializarMembranaPura() {
 }
 
 function draw() {
-    background(20); 
+    updateTheme();
+    dibujarFondoLienzo();
+    rellenoDeslizador(sliderParticulas);
+    rellenoDeslizador(sliderTamaño);
     
     let cantidadDeseada = sliderParticulas.value();
     radioParticula = sliderTamaño.value();
@@ -282,9 +291,6 @@ function draw() {
         ultimoTiempoGrafica = millis();
     }
 
-    if (checkMostrarGrafica && checkMostrarGrafica.checked()) {
-        dibujarPlanoCartesiano();
-    }
     
     if (modoPared === 'flexible') {
         for (let i = 0; i < numNodos; i++) {
@@ -333,17 +339,13 @@ function draw() {
     }
     
     if (modoPared === 'flexible') {
-        stroke(color(colorPromedioHex)); strokeWeight(1.2); noFill();
-        if (formatoPromedio === "punteado") { drawingContext.setLineDash([4, 6]); }
+        stroke(color(colorPromedioHex)); strokeWeight(THEME.fun ? 2 : 1.2); noFill();
+        if (formatoPromedio === "punteado") { drawingContext.setLineDash(THEME.fun ? [6, 7] : [4, 6]); }
         circle(centroX, centroY, radioMedioObservado * 2);
         if (formatoPromedio === "punteado") { drawingContext.setLineDash([]); }
     }
 
-    if (modoPared === 'flexible') { stroke(color(colorCirculoHex)); } else { stroke(0, 200, 255); }
-    strokeWeight(2.5); noFill();
-    beginShape();
-    for (let i = 0; i < numNodos; i++) { vertex(posicionesNodos[i].x, posicionesNodos[i].y); }
-    endShape(CLOSE);
+    dibujarRecipiente();
     
     for (let i = 0; i < particulas.length; i++) {
         let p = particulas[i]; p.x += p.vx; p.y += p.vy; comprobarParedesLocalesPuras(p);
@@ -351,7 +353,10 @@ function draw() {
     resolverChoquesParticulas();
     
     let colorFijo = color(colorParticulaHex);
-    let colorFrio = color(0, 100, 255); let colorCaliente = color(255, 50, 50); 
+    let colorFrio = color(THEME.frio); let colorCaliente = color(THEME.caliente); 
+    // Con el estilo juego, las partículas grandes llevan contorno de tinta y brillo
+    const conTinta = THEME.fun && radioParticula >= 4;
+    if (conTinta) { stroke(THEME.ink); strokeWeight(radioParticula >= 7 ? 2 : 1.4); } else noStroke();
     for (let i = 0; i < particulas.length; i++) {
         let p = particulas[i];
         if (checkTermografico && checkTermografico.checked()) {
@@ -359,7 +364,66 @@ function draw() {
             let factorTermo = map(vInstantanea, 0, 6, 0, 1, true);
             fill(lerpColor(colorFrio, colorCaliente, factorTermo));
         } else { fill(colorFijo); }
-        noStroke(); circle(p.x, p.y, radioParticula * 2);
+        circle(p.x, p.y, radioParticula * 2);
+    }
+    if (conTinta && radioParticula >= 5) {
+        noStroke(); fill(255, 255, 255, 150);
+        const rb = radioParticula * 0.35;
+        for (const p of particulas) circle(p.x - radioParticula * 0.35, p.y - radioParticula * 0.35, rb * 2);
+    }
+
+    // La gráfica va en la esquina del cuadrado del gas, por encima del globo
+    // (si no, el globo grande tapa los ejes)
+    if (checkMostrarGrafica && checkMostrarGrafica.checked()) {
+        push(); translate(0, FRANJA_SUP);
+        dibujarPlanoCartesiano();
+        pop();
+    }
+
+    const enCelsius = checkEscalaTemp && checkEscalaTemp.checked();
+    dibujarFichasDatos(temperaturaActualInt, enCelsius, presionAtm, volumenLitros);
+}
+
+// Relleno del color de acento hasta la bola del deslizador (estilo juego)
+function rellenoDeslizador(sl) {
+    if (!sl) return;
+    const el = sl.elt;
+    const pct = ((el.value - el.min) / (el.max - el.min) * 100).toFixed(1) + '%';
+    if (el.style.getPropertyValue('--fill') !== pct) el.style.setProperty('--fill', pct);
+}
+
+// Globo (membrana) o pared rígida
+function dibujarRecipiente() {
+    const colMembrana = modoPared === 'flexible' ? color(colorCirculoHex) : color(THEME.pared);
+    const contorno = () => {
+        beginShape();
+        for (let i = 0; i < numNodos; i++) { vertex(posicionesNodos[i].x, posicionesNodos[i].y); }
+        endShape(CLOSE);
+    };
+    if (!THEME.fun) {
+        stroke(modoPared === 'flexible' ? colMembrana : color(THEME.pared)); strokeWeight(2.5); noFill();
+        contorno();
+        return;
+    }
+    strokeJoin(ROUND);
+    if (modoPared === 'flexible') {
+        // Globo: látex translúcido con contorno de tinta, nudo abajo y un brillo
+        const relleno = color(colorCirculoHex); relleno.setAlpha(34);
+        noStroke(); fill(relleno); contorno();
+        noFill(); stroke(THEME.ink); strokeWeight(7); contorno();
+        stroke(colMembrana); strokeWeight(3.5); contorno();
+        const n = posicionesNodos[Math.round(numNodos / 4)];   // el nodo de abajo
+        stroke(THEME.ink); strokeWeight(2.5); fill(colMembrana);
+        triangle(n.x, n.y + 2, n.x - 8, n.y + 14, n.x + 8, n.y + 14);
+        noFill(); stroke(255, 255, 255, 110); strokeWeight(4); strokeCap(ROUND);
+        const rb = radioMedioObservado * 0.78;
+        arc(centroX, centroY, rb * 2, rb * 2, PI * 1.1, PI * 1.38);
+    } else {
+        // Pared rígida: aro de metal grueso con contorno de tinta
+        noFill(); stroke(THEME.ink); strokeWeight(11); contorno();
+        stroke(colMembrana); strokeWeight(6); contorno();
+        stroke(THEME.paredBrillo); strokeWeight(2); strokeCap(ROUND);
+        arc(centroX, centroY, radioParedFija * 2 - 2, radioParedFija * 2 - 2, PI * 1.1, PI * 1.45);
     }
 }
 
@@ -418,33 +482,37 @@ function actualizarEstiloSliderTemperatura() {
 }
 
 function dibujarPlanoCartesiano() {
-    fill(28, 28, 28); stroke(45); strokeWeight(1); rect(20, 360, 200, 160, 6);
-    stroke(38); strokeWeight(1);
+    const fun = THEME.fun;
+    if (fun) tablero(20, 360, 200, 160, 16);
+    else { fill(THEME.panelBg); stroke(THEME.border); strokeWeight(1); rect(20, 360, 200, 160, 6); }
+    stroke(THEME.grid); strokeWeight(1);
     for(let x = 80; x < 200; x += 35)  line(x, 380, x, 500);
     for(let y = 410; y < 500; y += 30) line(50, y, 200, y);
-    stroke(120); strokeWeight(1.5); line(50, 380, 50, 500); line(50, 500, 200, 500); 
-    noStroke(); fill(180); textSize(11); textAlign(CENTER, CENTER); text("V (L)", 196, 488); text("P (atm)", 62, 370);
-    //textSize(9); fill(100); textAlign(LEFT); text("GRÁFICA TERMODINÁMICA (3s)", 55, 392);
+    stroke(THEME.textDim); strokeWeight(fun ? 2.5 : 1.5); strokeCap(ROUND); line(50, 380, 50, 500); line(50, 500, 200, 500); 
+    noStroke(); fill(THEME.text); textStyle(BOLD); textSize(fun ? 13 : 11); textAlign(CENTER, CENTER); text("V (L)", 194, 488); text("P (atm)", 66, 370);
+    textStyle(NORMAL);
     
     // Ejes desde 0: V de 0 a 5 L; P de 0 al máximo reciente (redondeado hacia arriba)
     let pMax = 2;
     for (let pt of historialPuntos) pMax = max(pMax, ceil(pt.p * 1.2));
     let xDe = (v) => constrain(map(v, 0, 5, 50, 200), 50, 200);
     let yDe = (p) => constrain(map(p, 0, pMax, 500, 385), 380, 500);
-    noStroke(); fill(110); textSize(9);
-    textAlign(RIGHT, CENTER); text(pMax, 46, 385); text('0', 46, 500);
+    noStroke(); fill(THEME.textDim); textSize(fun ? 11 : 9);
+    textAlign(RIGHT, CENTER); text(pMax, 45, 385); text('0', 45, 500);
     textAlign(CENTER, TOP); text('5', 200, 503);
 
-    noFill(); stroke(0, 200, 255); strokeWeight(2); beginShape();
+    noFill(); stroke(THEME.curva); strokeWeight(fun ? 3.5 : 2); strokeJoin(ROUND); beginShape();
     for (let i = 0; i < historialPuntos.length; i++) { vertex(xDe(historialPuntos[i].v), yDe(historialPuntos[i].p)); }
     endShape();
     
     if (historialPuntos.length > 0) {
         let uP = historialPuntos[historialPuntos.length - 1];
         let px = xDe(uP.v); let py = yDe(uP.p);
-        stroke(0, 200, 255, 90); strokeWeight(1); drawingContext.setLineDash([4, 4]);
+        const guia = color(THEME.curva); guia.setAlpha(120);
+        stroke(guia); strokeWeight(1); drawingContext.setLineDash([4, 4]);
         line(px, py, 50, py); line(px, py, px, 500); drawingContext.setLineDash([]);
-        fill(255, 200, 0); noStroke(); circle(px, py, 7);
+        if (fun) { stroke(THEME.ink); strokeWeight(2); } else noStroke();
+        fill(THEME.punto); circle(px, py, fun ? 10 : 7);
     }
 }
 

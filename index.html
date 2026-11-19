@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulación: Presión de Gases</title>
+    <title>Simulación: presión de gases</title>
     <!-- Página pública de esta simulación: simulaciencia.es. Esta dirección (github.io) es la que carga la web dentro de un iframe; la canónica evita que los buscadores la indexen como página aparte. -->
     <meta name="description" content="Modelo de partículas que relaciona presión, temperatura y volumen según la teoría cinético-molecular: comprueba las leyes de Boyle y de Gay-Lussac.">
     <link rel="canonical" id="canonical" href="https://simulaciencia.es/simulaciones/gases/">
@@ -15,16 +15,19 @@
     <script src="js/i18n.js"></script>
     <script src="js/vendor/p5.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/estilo-juego.css">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script src="js/estadisticas.js" data-sim="sim-gases"></script>
     <script src="js/sello.js" data-contenedor="main.simulation-panel" data-esquina="bl"></script>
 </head>
 <body>
+    <!-- Tema guardado, antes de pintar: Oscuro («Pizarra») por defecto; ?tema=claro|oscuro|contraste manda (ver js/estilo.js) -->
+    <script>(function(){var t=null;try{t=localStorage.getItem('sim-gases-tema');}catch(e){}var q={claro:'light',contraste:'contrast',oscuro:'dark'}[new URLSearchParams(location.search).get('tema')];if(q)t=q;if(t==='light'||t==='contrast')document.body.classList.add('theme-'+t);})();</script>
     <div class="app-container">
         <!-- PANEL IZQUIERDO: Controles físicos -->
         <aside class="control-panel">
             <header>
-                <h1>Cinética de Gases</h1>
+                <h1>Cinética de gases</h1>
                 <p class="subtitle">Modelo de presión microscópica</p>
             </header>
             
@@ -39,7 +42,7 @@
                         <label for="input-direct-particles">Cantidad de partículas</label>
                     </div>
                     <div class="stepper-container">
-                        <button type="button" class="stepper-btn" aria-label="Quitar partículas" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <button type="button" class="stepper-btn" aria-label="Quitar partículas" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">−</button>
                         <div class="stepper-display">
                             <input type="number" id="input-direct-particles" class="input-inline-editable" value="50" min="1" max="500">
                         </div>
@@ -66,7 +69,7 @@
                         </div>
                     </div>
                     <div class="stepper-container">
-                        <button type="button" class="stepper-btn" aria-label="Bajar la temperatura" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <button type="button" class="stepper-btn" aria-label="Bajar la temperatura" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">−</button>
                         <div class="stepper-display">
                             <input type="number" id="input-direct-temp" class="input-inline-editable" value="273" min="0" max="500">
                             <span id="unit-temp-view" class="unit">K</span>
@@ -87,15 +90,15 @@
                 <h2>Comportamiento de recipiente</h2>
                 <div class="input-wrapper">
                     <select id="select-pared" class="custom-select" aria-label="Comportamiento de recipiente">
-                        <option value="flexible" selected>Membrana Flexible (Globo)</option>
-                        <option value="fija">Pared Rígida (Fija)</option>
+                        <option value="flexible" selected>Membrana flexible (globo)</option>
+                        <option value="fija">Pared rígida (fija)</option>
                     </select>
                 </div>
 
                 <div id="wrapper-radio-manual" class="input-wrapper hidden">
                     <label>Volumen del recipiente</label>
                     <div class="stepper-container">
-                        <button type="button" class="stepper-btn" aria-label="Reducir el volumen" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">-</button>
+                        <button type="button" class="stepper-btn" aria-label="Reducir el volumen" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">−</button>
                         <div class="stepper-display">
                             <span id="input-radio-view">1,15</span>
                             <span class="unit">L</span>
@@ -108,7 +111,7 @@
             <hr class="divider">
 
             <section class="control-group">
-                <h2>Datos Físicos</h2>
+                <h2>Datos físicos</h2>
                 <div class="dashboard-static-group horizontal-layout">
                     <div class="card card-data">
                         <h3>Presión (P)</h3>
@@ -119,7 +122,7 @@
                         <div class="metric"><span id="metric-volumen-fisico">0,00</span> <small>L</small></div>
                     </div>
                     <div class="card hidden-radio-px">
-                        <h3>Radio de la Pared (R)</h3>
+                        <h3>Radio de la pared (R)</h3>
                         <div class="metric-secondary"><span id="metric-radio">90.0</span> px</div>
                     </div>
                 </div>
@@ -152,18 +155,28 @@
         <!-- AREA CENTRAL: Simulación -->
         <main class="simulation-panel">
             <button id="play-pause-btn" class="toggle-btn play-btn" onclick="alternarReproduccion()">⏸ Pausar</button>
-            <button id="drawer-toggle-btn" class="toggle-btn drawer-btn" onclick="alternarDrawer()">⚙ Ajustes Visuales</button>
+            <button id="drawer-toggle-btn" class="toggle-btn drawer-btn" onclick="alternarDrawer()">⚙ Ajustes visuales</button>
             <div id="canvas-container"></div>
         </main>
 
         <!-- PANEL DERECHO: Cajón Desplegable (Drawer) -->
         <aside id="visual-drawer" class="visual-drawer drawer-closed">
             <div class="drawer-header">
-                <h2>Ajustes Visuales</h2>
-                <button class="close-drawer-btn" onclick="alternarDrawer()">×</button>
+                <h2>Ajustes visuales</h2>
+                <button class="close-drawer-btn" onclick="alternarDrawer()" aria-label="Cerrar">×</button>
             </div>
             
             <div class="drawer-content">
+                <!-- Tema visual -->
+                <div class="input-wrapper">
+                    <label id="lbl-tema">Tema visual</label>
+                    <div class="theme-options" role="radiogroup" aria-labelledby="lbl-tema">
+                        <button type="button" class="theme-opt active" data-theme="dark" role="radio" aria-checked="true"><span class="theme-swatch dark-swatch"></span>Oscuro</button>
+                        <button type="button" class="theme-opt" data-theme="light" role="radio" aria-checked="false"><span class="theme-swatch light-swatch"></span>Claro</button>
+                        <button type="button" class="theme-opt" data-theme="contrast" role="radio" aria-checked="false"><span class="theme-swatch contrast-swatch"></span>Alto contraste</button>
+                    </div>
+                </div>
+
                 <!-- Tamaño partícula -->
                 <div class="input-wrapper">
                     <div class="label-container">
@@ -204,8 +217,8 @@
                 <div class="input-wrapper" id="wrapper-format-promedio">
                     <label for="select-formato-promedio">Formato línea promedio</label>
                     <select id="select-formato-promedio" class="custom-select">
-                        <option value="punteado" selected>Línea Discontinua</option>
-                        <option value="continuo">Línea Continua</option>
+                        <option value="punteado" selected>Línea discontinua</option>
+                        <option value="continuo">Línea continua</option>
                     </select>
                 </div>
                 
@@ -223,6 +236,7 @@
         </aside>
     </div>
     <script src="js/parametros.js"></script>
+    <script src="js/estilo.js"></script>
     <script src="js/sketch.js"></script>
 </body>
 </html>

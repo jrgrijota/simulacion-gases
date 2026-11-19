@@ -1,8 +1,8 @@
 // Interfazaren itzulpena euskarara (?lang=eu erabiltzean). Ikus js/i18n.js.
 window.I18N_EU = {
   // Título y cabecera
-  'Simulación: Presión de Gases': 'Simulazioa: Gasen Presioa',
-  'Cinética de Gases': 'Gasen Zinetika',
+  'Simulación: presión de gases': 'Simulazioa: gasen presioa',
+  'Cinética de gases': 'Gasen zinetika',
   'Modelo de presión microscópica': 'Presioaren eredu mikroskopikoa',
 
   // Configuración del gas
@@ -12,15 +12,15 @@ window.I18N_EU = {
 
   // Recipiente
   'Comportamiento de recipiente': 'Ontziaren portaera',
-  'Membrana Flexible (Globo)': 'Mintz Malgua (Puxika)',
-  'Pared Rígida (Fija)': 'Horma Zurruna (Finkoa)',
+  'Membrana flexible (globo)': 'Mintz malgua (puxika)',
+  'Pared rígida (fija)': 'Horma zurruna (finkoa)',
   'Volumen del recipiente': 'Ontziaren bolumena',
 
   // Datos físicos
-  'Datos Físicos': 'Datu Fisikoak',
+  'Datos físicos': 'Datu fisikoak',
   'Presión (P)': 'Presioa (P)',
   'Volumen (V)': 'Bolumena (V)',
-  'Radio de la Pared (R)': 'Hormaren Erradioa (R)',
+  'Radio de la pared (R)': 'Hormaren erradioa (R)',
   'Mostrar gráfica P-V': 'Erakutsi P-V grafikoa',
 
   // Monitorización
@@ -32,17 +32,17 @@ window.I18N_EU = {
   // Botones de la simulación
   '⏸ Pausar': '⏸ Pausatu',
   '▶ Reanudar': '▶ Jarraitu',
-  '⚙ Ajustes Visuales': '⚙ Ikus-doikuntzak',
+  '⚙ Ajustes visuales': '⚙ Ikus-doikuntzak',
 
   // Ajustes visuales
-  'Ajustes Visuales': 'Ikus-doikuntzak',
+  'Ajustes visuales': 'Ikus-doikuntzak',
   'Tamaño partícula': 'Partikularen tamaina',
   'Color partículas': 'Partikulen kolorea',
   'Color membrana': 'Mintzaren kolorea',
   'Color línea promedio': 'Batez besteko lerroaren kolorea',
   'Formato línea promedio': 'Batez besteko lerroaren formatua',
-  'Línea Discontinua': 'Lerro Etena',
-  'Línea Continua': 'Lerro Jarraitua',
+  'Línea discontinua': 'Lerro etena',
+  'Línea continua': 'Lerro jarraitua',
   'Color según velocidad': 'Kolorea abiaduraren arabera',
   'Pantalla completa': 'Pantaila osoa',
   // Nombres de controles para lectores de pantalla
@@ -53,6 +53,14 @@ window.I18N_EU = {
   'Subir la temperatura': 'Igo tenperatura',
   'Reducir el volumen': 'Txikitu bolumena',
   'Aumentar el volumen': 'Handitu bolumena',
+  // Tema visual y fichas del lienzo
+  'Presión': 'Presioa',
+  'Volumen': 'Bolumena',
+  'Tema visual': 'Ikus-gaia',
+  'Oscuro': 'Iluna',
+  'Claro': 'Argia',
+  'Alto contraste': 'Kontraste handia',
+  'Cerrar': 'Itxi',
   // Sello de la zona de simulación (js/sello.js)
   'Más simulaciones en simulaciencia.es': 'Simulazio gehiago simulaciencia.es webgunean'
 };
