@@ -32,6 +32,9 @@ const TEMA_PROPIO = {
 };
 const tinta = () => THEME.ink || '#071a2b';
 
+// Píxeles del modelo por píxel físico (con r = 182)
+const ESCALA_MODELO = 0.62;
+
 // ── Composición ──────────────────────────────────────────────────
 function calcularEscena() {
     const movil = esMovil();
@@ -184,6 +187,8 @@ function mensaje() {
     }
     if (G.T === 0) return { tag: i18n.t('CERO ABSOLUTO'), col: COLS.cambio, txt: i18n.t('A 0 K las moléculas se quedan quietas: no chocan y la presión es cero. Un gas real se habría vuelto líquido mucho antes.') };
     if (G.T < 80) return { tag: i18n.t('MUY FRÍO'), col: COLS.frio, txt: i18n.t('A {t} un gas real ya se habría vuelto líquido. Este modelo es de un gas ideal: sus moléculas no se atraen y siguen siendo gas.', { t: tempTxt(G.T) }) };
+    if (G.modo === 'globo' && G.radioMedio > RADIO_MAX_GLOBO - 10 && G.presion > 1.15)
+        return { tag: i18n.t('AL LÍMITE'), col: COLS.cambio, txt: i18n.t('La goma ya no puede estirarse más. Las moléculas empujan más que el aire de fuera y la presión dentro sube por encima de 1 atm.') };
     if (G.modo === 'globo') {
         const t = tendenciaDe('V');
         if (t > 0) return { tag: i18n.t('SE INFLA'), col: COLS.gas, txt: i18n.t('Dentro, las moléculas empujan más que el aire de fuera: la goma cede y el globo crece hasta que los dos empujes se igualan.') };
@@ -320,7 +325,9 @@ function pastillaCambio() {
 
 // Globo: tamaño ∝ raíz cúbica del volumen (es un globo de verdad)
 function geomGlobo() {
-    const cx = 186, neck = 244, R = 58 * Math.cbrt(Math.max(0.05, volSuave || 1.2) / 1.2);
+    const cx = 186, neck = 244, R0 = 58 * Math.cbrt(Math.max(0.05, volSuave || 1.2) / 1.2);
+    // Por encima de unos 2,3 L crece más despacio, para no tapar los rótulos ni la lectura
+    const R = R0 > 72 ? 72 + (R0 - 72) * 0.45 : R0;
     return { cx, neck, R, w: R, h: R * 1.08, cy: neck - R * 1.02 - 14 };
 }
 function drawGlobo() {
@@ -446,7 +453,9 @@ function colorRapidez(v) {
     return THEME.fun || temaActual() === 'marca' ? lerpColor(color(COL.lenta), color(COL.rapida), f) : lerpColor(color('#00ffff'), color('#ff66ff'), f);
 }
 function drawModelo() {
-    const { cx, cy, r } = MODELO, k = 0.72 * r / 182;
+    // Escala del modelo: el globo más grande posible (radio físico 235 más lo que
+    // se abomba la goma) cabe con un anillo de aire alrededor.
+    const { cx, cy, r } = MODELO, k = ESCALA_MODELO * r / 182;
     const X = (x) => cx + x * k, Y = (y) => cy + y * k;
     const rD = Math.max(G.rParticula * k, r / 40);
     noStroke(); fill(THEME.modelBg); circle(cx, cy, 2 * r);
@@ -643,7 +652,7 @@ function drawGrafica() {
     const pMax = Math.max(2, ...historial.map(h => Math.ceil(h.p * 1.2)), Math.ceil(G.presion * 1.1));
     const vMax = Math.max(2.5, ...historial.map(h => Math.ceil(h.v * 1.15 * 2) / 2));
     const E = {
-        pv: { fx: (h) => h.v, fy: (h) => h.p, xM: Math.max(5, vMax), yM: pMax, xL: 'V (L)', yL: 'P (atm)' },
+        pv: { fx: (h) => h.v, fy: (h) => h.p, xM: Math.max(volSuave || 0, ...historial.map(h => h.v)) <= 4.9 ? 5 : 10, yM: pMax, xL: 'V (L)', yL: 'P (atm)' },
         vt: { fx: (h) => h.T, fy: (h) => h.v, xM: 500, yM: vMax, xL: 'T (K)', yL: 'V (L)' },
         pt: { fx: (h) => h.T, fy: (h) => h.p, xM: 500, yM: pMax, xL: 'T (K)', yL: 'P (atm)' },
     }[ejes];

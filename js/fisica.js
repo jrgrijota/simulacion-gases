@@ -38,7 +38,7 @@ const RECT_W = 347, RECT_FONDO = 180;
 const VOL_MIN = 0.09, VOL_MAX = 4.60;                 // L (los mismos que la pared rígida de antes)
 
 // Ventana del modelo en px de física (el aire de fuera llega un poco más allá)
-const R_VENTANA_FIS = 253;
+const R_VENTANA_FIS = 182 / 0.62;   // radio físico que cubre el visor del modelo (ESCALA_MODELO en escena.js)
 
 const G = {
     modo: 'globo',
@@ -295,10 +295,11 @@ function choquesEntreMoleculas() {
 
 // ── Aire de fuera (solo se dibuja; solo alrededor del globo) ──────
 // Misma temperatura y misma presión (1 atm) que el gas del globo en
-// equilibrio, así que la misma densidad: N / área, suavizada.
+// equilibrio, así que la misma densidad: N / área, suavizada. Si la goma ya
+// no da más de sí y dentro hay más presión, fuera hay menos densidad (÷ P).
 function pasoAire() {
     if (G.modo !== 'globo') { G.aire = []; return; }
-    const dens = G.N / max(G.area, 1);
+    const dens = G.N / max(G.area, 1) / (G.presion > 1.15 && G.radioMedio > RADIO_MAX_GLOBO - 10 ? G.presion : 1);
     G.densAire = G.densAire == null ? dens : G.densAire + (dens - G.densAire) * 0.01;
     const areaFuera = PI * R_VENTANA_FIS * R_VENTANA_FIS - G.area;
     const objetivo = Math.min(900, Math.round(G.densAire * areaFuera));
