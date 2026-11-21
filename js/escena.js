@@ -73,7 +73,30 @@ function colocarMandos() {
 function ajustarEscena(cv) { encajarEscena(cv, CV_W, CV_H, ESC_MOVIL); }
 function fitCanvas() {
     const cv = document.querySelector('#canvas-container canvas');
-    if (cv) ajustarEscena(cv);
+    if (!cv) return;
+    ajustarEscena(cv);
+    // Resolución del lienzo: la que se ve en pantalla, ni más ni menos (entre 1 y 2).
+    // Antes era siempre 2 o más: en una pantalla normal se pintaban 4 veces los píxeles necesarios.
+    const d = densidadAdecuada(cv);
+    if (Math.abs(d - pixelDensity()) > 0.01) { pixelDensity(d); ajustarEscena(cv); }
+}
+let topeDensidad = 2;           // baja sola si el ordenador no llega a unos 40 fotogramas por segundo
+function densidadAdecuada(cv) {
+    const visto = cv.getBoundingClientRect().width / CV_W * displayDensity();
+    return constrain(Math.ceil(visto * 4) / 4, 1, topeDensidad);
+}
+// Cada 3 s: si van menos de 40 fps, se baja la resolución un escalón (hasta 1)
+let fpsMarca = { t: 0, f: 0 };
+function vigilarRendimiento() {
+    const ahora = performance.now();
+    if (!fpsMarca.t) { fpsMarca = { t: ahora, f: frameCount }; return; }
+    if (ahora - fpsMarca.t < 3000) return;
+    if (ahora - fpsMarca.t > 4500) { fpsMarca = { t: ahora, f: frameCount }; return; }   // pestaña oculta o lienzo fuera de la vista: no cuenta
+    const fps = (frameCount - fpsMarca.f) * 1000 / (ahora - fpsMarca.t);
+    fpsMarca = { t: ahora, f: frameCount };
+    if (document.hidden || fps >= 40 || pixelDensity() <= 1) return;
+    topeDensidad = Math.max(1, pixelDensity() - 0.25);
+    fitCanvas();
 }
 function rehacerComposicion() {
     calcularEscena();
@@ -374,7 +397,7 @@ function drawGlobo() {
     sondaYCable(cx, 288, cy + 4, [[cx - 10, 282], [54, 282], [30, 258], [30, 120]]);
     lectura(0, 70, 104, unidadC ? String(G.T - 273) : String(G.T), unidadC ? '°C' : 'K', 34);
     textoSis(i18n.t('sonda en el gas'), 52, 136, 12, THEME.rotuloObj, CENTER);
-    lectura(286, 92, 112, fmt(G.presion, 2), 'atm', 26);
+    lectura(286, 92, 112, fmt(lecturas().P, 2), 'atm', 26);
     textoSis(i18n.t('globo de goma atado a la boquilla'), 0, 22, 13, THEME.rotuloObj);
     textoSis(i18n.t('fuera: aire a 1 atm'), 0, 40, 13, THEME.rotuloObj);
     const pc = pastillaCambio();
@@ -436,7 +459,7 @@ function drawCilindro() {
     sondaYCable(gx + 36, fondo - 2, fondo - 14, [[gx + 36, fondo + 4], [gx + 36, 282], [48, 288], [30, 270], [30, 128]]);
     lectura(0, 78, 104, unidadC ? String(G.T - 273) : String(G.T), unidadC ? '°C' : 'K', 34);
     textoSis(i18n.t('sonda en el gas'), 52, 144, 12, THEME.rotuloObj, CENTER);
-    lectura(288, 104, 112, fmt(G.presion, 2), 'atm', 26);
+    lectura(288, 104, 112, fmt(lecturas().P, 2), 'atm', 26);
     textoSis(i18n.t('cilindro de vidrio · émbolo sujeto'), 0, 22, 13, THEME.rotuloObj);
     stroke(tinta()); strokeWeight(1); fill(255, 255, 255, 153); rect(40, 178, 10, 10, 2);
     textoSis(i18n.t('gas: en'), 55, 187, 11.5, THEME.rotuloObj);
@@ -463,9 +486,11 @@ function drawModelo() {
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
 
     if (G.modo === 'globo') {
-        // Aire de fuera, tenue
-        noStroke(); fill(THEME.aire);
-        for (const p of G.aire) circle(X(p.x), Y(p.y), rD * 1.8);
+        // Aire de fuera, tenue: todos los puntos en un solo trazo
+        const ra = rD * 0.9;
+        ctx.save(); ctx.beginPath();
+        for (const p of G.aire) { const x = X(p.x), y = Y(p.y); ctx.moveTo(x + ra, y); ctx.arc(x, y, ra, 0, Math.PI * 2); }
+        ctx.fillStyle = THEME.aire; ctx.fill(); ctx.restore();
         // Membrana
         const caminoMembrana = () => { beginShape(); for (const n of G.nodos) vertex(X(n.x), Y(n.y)); endShape(CLOSE); };
         const rel = color(COL.latex); rel.setAlpha(18); noStroke(); fill(rel); caminoMembrana();
@@ -516,22 +541,57 @@ function drawModelo() {
     textStyle(NORMAL);
     drawLeyenda(ESC_MOVIL ? 26 : cx - 184, yR + hR + (ESC_MOVIL ? 32 : 28), rD);
 }
-function dibujarMoleculas(X, Y, rD, k) {
-    const ink = tinta();
-    if (opciones.estelas) {
-        strokeCap(ROUND); strokeWeight(3);
-        for (const p of G.particulas) {
-            const v = Math.hypot(p.vx, p.vy); if (v < 0.05) continue;
-            const c = colorRapidez(v); c.setAlpha(90); stroke(c);
-            line(X(p.x), Y(p.y), X(p.x - p.vx * 4), Y(p.y - p.vy * 4));
+// Colores por rapidez en 25 tonos precalculados (para no crear un color por
+// molécula y fotograma). La clave cambia con el tema y con «Color por rapidez».
+const TONOS = 24;
+let paletaClave = '', paletaRelleno = [], paletaEstela = [];
+function paletaRapidez() {
+    const clave = temaActual() + (opciones.color ? 1 : 0);
+    if (clave !== paletaClave) {
+        paletaClave = clave; paletaRelleno = []; paletaEstela = [];
+        for (let i = 0; i <= TONOS; i++) {
+            const c = colorRapidez(6 * i / TONOS);
+            paletaRelleno.push(c.toString());
+            c.setAlpha(90); paletaEstela.push(c.toString());
         }
     }
-    stroke(ink); strokeWeight(rD > 4 ? 1.6 : 1.2);
-    for (const p of G.particulas) { fill(colorRapidez(Math.hypot(p.vx, p.vy))); circle(X(p.x), Y(p.y), 2 * rD); }
-    if (rD >= 3.5) {
-        noStroke(); fill(255, 255, 255, 140);
-        for (const p of G.particulas) circle(X(p.x) - rD * 0.33, Y(p.y) - rD * 0.33, rD * 0.64);
+}
+const tonoDe = (v) => Math.round(constrain(v / 6, 0, 1) * TONOS);
+
+// Las moléculas se dibujan por tandas del mismo color con el contexto del
+// lienzo directamente: un trazo por tanda en vez de uno por molécula.
+function dibujarMoleculas(X, Y, rD, k) {
+    paletaRapidez();
+    const ctx = drawingContext, ps = G.particulas;
+    ctx.save();
+    const tandas = Array.from({ length: TONOS + 1 }, () => []);
+    for (const p of ps) tandas[tonoDe(Math.hypot(p.vx, p.vy))].push(p);
+    if (opciones.estelas) {
+        ctx.lineCap = 'round'; ctx.lineWidth = 3;
+        tandas.forEach((t, i) => {
+            if (!t.length) return;
+            ctx.beginPath();
+            for (const p of t) {
+                if (Math.abs(p.vx) + Math.abs(p.vy) < 0.05) continue;
+                ctx.moveTo(X(p.x), Y(p.y)); ctx.lineTo(X(p.x - p.vx * 4), Y(p.y - p.vy * 4));
+            }
+            ctx.strokeStyle = paletaEstela[i]; ctx.stroke();
+        });
     }
+    ctx.strokeStyle = tinta(); ctx.lineWidth = rD > 4 ? 1.6 : 1.2;
+    tandas.forEach((t, i) => {
+        if (!t.length) return;
+        ctx.beginPath();
+        for (const p of t) { const x = X(p.x), y = Y(p.y); ctx.moveTo(x + rD, y); ctx.arc(x, y, rD, 0, Math.PI * 2); }
+        ctx.fillStyle = paletaRelleno[i]; ctx.fill(); ctx.stroke();
+    });
+    if (rD >= 3.5) {
+        const rb = rD * 0.32, d = rD * 0.33;
+        ctx.beginPath();
+        for (const p of ps) { const x = X(p.x) - d, y = Y(p.y) - d; ctx.moveTo(x + rb, y); ctx.arc(x, y, rb, 0, Math.PI * 2); }
+        ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fill();
+    }
+    ctx.restore();
 }
 function drawLeyenda(x, y, rD) {
     const fs = ESC_MOVIL ? 13 : 13.5, dim = THEME.textDim;
@@ -571,6 +631,14 @@ function relacion(a, b) {
     if (cerca(r, 1, 0.04)) return i18n.t('igual');
     return '';
 }
+// Lo que se lee en números se actualiza 4 veces por segundo: más rápido no se
+// puede leer y obliga a repintar el texto en cada fotograma.
+let lectCache = { t: -1e9, P: 0, V: 0 }, mensajeCache = { clave: '' };
+function lecturas() {
+    const ahora = millis();
+    if (ahora - lectCache.t >= 250 || G.pausa) lectCache = { t: ahora, P: G.presion, V: volSuave };
+    return lectCache;
+}
 function drawPanelEstado(m) {
     const { x, y, w, h, compacto } = PANEL, pad = 24;
     tarjeta({ x, y, w, h }, THEME.pillBg || THEME.panelBg, 20);
@@ -581,18 +649,25 @@ function drawPanelEstado(m) {
     const fsMsg = compacto ? 17 : 19, lead = fsMsg + 7;
     let fsUsado = fsMsg;
     textSize(fsMsg);
-    let lineas = partirRico(trozosRicos(m.txt), w - 2 * pad);
-    if (lineas.length > 4) { fsUsado = fsMsg - 2; textSize(fsUsado); lineas = partirRico(trozosRicos(m.txt), w - 2 * pad); }
+    // El reparto en líneas solo se calcula cuando cambia el mensaje (medir texto es caro)
+    const clave = m.txt + '|' + fsMsg + '|' + w + '|' + textFont();
+    if (clave !== mensajeCache.clave) {
+        let lineas = partirRico(trozosRicos(m.txt), w - 2 * pad), fs = fsMsg;
+        if (lineas.length > 4) { fs = fsMsg - 2; textSize(fs); lineas = partirRico(trozosRicos(m.txt), w - 2 * pad); }
+        mensajeCache = { clave, lineas, fs };
+    }
+    const lineas = mensajeCache.lineas;
+    fsUsado = mensajeCache.fs; textSize(fsUsado);
     noStroke(); fill(THEME.text);
     const yMsg = y + 20 + th + 16;
     textoRico(lineas.slice(0, 5), x + pad, yMsg, fsUsado + 7);
     let yy = yMsg + 4 * lead + 6;
     stroke(THEME.border); strokeWeight(1.5); line(x + pad, yy, x + w - pad, yy);
     textoSis(i18n.t('Lo que miden los aparatos'), x + pad, yy + 26, 14, THEME.textDim);
-    const cel = celebrando() && CELEB.ref ? CELEB.ref : null;
+    const cel = celebrando() && CELEB.ref ? CELEB.ref : null, L = lecturas();
     const filas = [
-        ['Presión', fmt(G.presion, 2) + ' atm', cel ? relacion(G.presion, cel.P) : ''],
-        ['Volumen', fmt(volSuave, 2) + ' L', cel ? relacion(volSuave, cel.V) : ''],
+        ['Presión', fmt(L.P, 2) + ' atm', cel ? relacion(L.P, cel.P) : ''],
+        ['Volumen', fmt(L.V, 2) + ' L', cel ? relacion(L.V, cel.V) : ''],
         ['Temperatura', tempTxt(G.T), cel ? relacion(G.T, cel.T) : ''],
         ['Moléculas', String(G.N), cel ? relacion(G.N, cel.N) : ''],
     ];
@@ -816,7 +891,7 @@ function setupControles() {
 function setup() {
     calcularEscena();
     const cv = createCanvas(CV_W, CV_H);
-    pixelDensity(Math.min(3, Math.max(2, displayDensity())));
+    pixelDensity(1);              // fitCanvas() pone la adecuada en cuanto se sabe el tamaño en pantalla
     cv.parent('canvas-container');
     cv.elt.setAttribute('role', 'img');
     cv.elt.setAttribute('aria-label', i18n.t('Simulación de la presión de un gas: el recipiente con su manómetro, el modelo de moléculas y la gráfica. Los mensajes de la simulación se leen en voz alta.'));
@@ -848,6 +923,7 @@ function setup() {
 }
 
 function draw() {
+    vigilarRendimiento();
     actualizarTema(TEMA_PROPIO);
     clear();
     fuenteJuego();
