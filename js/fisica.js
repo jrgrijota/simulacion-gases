@@ -157,9 +157,10 @@ function pausar(si) {
 function pasoFisica() {
     if (G.pausa) return;
     G.pasos++;
-    gestionarParticulas();
 
-    // Temperatura: la rapidez de las moléculas escala con √T
+    // Temperatura: la rapidez de las moléculas escala con √T.
+    // Va antes de añadir moléculas: las nuevas ya nacen con la rapidez de la
+    // temperatura actual y no deben escalarse otra vez.
     if (G.T !== G.Tanterior) {
         const escalar = (lista) => {
             for (const p of lista) {
@@ -171,6 +172,7 @@ function pasoFisica() {
         escalar(G.particulas); escalar(G.aire);
         G.Tanterior = G.T;
     }
+    gestionarParticulas();
 
     if (G.modo === 'globo') {
         let area = 0;

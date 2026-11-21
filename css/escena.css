@@ -52,6 +52,19 @@ body.modo-rigido .only-globo { display: none !important; }
     font-size: calc(var(--u) * 13);
 }
 
+/* ── Globo explotado: mandos apagados y botón para inflar otro ── */
+body.estallado .mandos-gas { opacity: .45; pointer-events: none; }
+.boton-globo-nuevo {
+    position: absolute;
+    height: calc(var(--u) * 48);
+    font-size: calc(var(--u) * 18);
+    justify-content: center;
+    border-width: 3px;
+    border-color: var(--accent);
+    box-shadow: 0 4px 0 var(--boton-sombra, #071a2b);
+}
+.boton-globo-nuevo[hidden] { display: none; }
+
 /* ── Carril de ejes, sobre la tira de papel ─────────── */
 .mandos-grafica .carril.ejes {
     display: flex;

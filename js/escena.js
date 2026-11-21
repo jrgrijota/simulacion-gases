@@ -69,6 +69,7 @@ function calcularEscena() {
 function colocarMandos() {
     colocarSobreLienzo(document.querySelector('.mandos-gas'), MANDOS, CV_W, CV_H);
     colocarSobreLienzo(document.querySelector('.mandos-grafica'), CARRIL_G, CV_W, CV_H);
+    colocarSobreLienzo($('btn-globo-nuevo'), { x: MODELO.cx - 110, y: MODELO.cy - 24, w: 220 }, CV_W, CV_H);
 }
 function ajustarEscena(cv) { encajarEscena(cv, CV_W, CV_H, ESC_MOVIL); }
 function fitCanvas() {
@@ -192,6 +193,7 @@ function tendenciaDe(clave) {
 function mensaje() {
     const COLS = { gas: THEME.gas, cambio: THEME.change, frio: THEME.cold, dim: THEME.textDim };
     const N = G.N;
+    if (ESTALLIDO) return { tag: i18n.t('¡HA EXPLOTADO!'), col: THEME.hot || COLS.cambio, txt: i18n.t('Dentro había más de {p} atm y la goma no aguantó: se rompió y las moléculas salieron al aire. El manómetro marca ya la presión del aire.', { p: P_ROTURA }) };
     if (G.pausa) return { tag: i18n.t('EN PAUSA'), col: COLS.dim, txt: i18n.t('Todo está quieto para que lo mires con calma: cuenta las moléculas o mira cómo se reparten. Entre ellas no hay nada, ni siquiera aire.') };
     if (celebrando()) {
         const c = CELEB, dobla = c.x === 2;
@@ -210,8 +212,8 @@ function mensaje() {
     }
     if (G.T === 0) return { tag: i18n.t('CERO ABSOLUTO'), col: COLS.cambio, txt: i18n.t('A 0 K las moléculas se quedan quietas: no chocan y la presión es cero. Un gas real se habría vuelto líquido mucho antes.') };
     if (G.T < 80) return { tag: i18n.t('MUY FRÍO'), col: COLS.frio, txt: i18n.t('A {t} un gas real ya se habría vuelto líquido. Este modelo es de un gas ideal: sus moléculas no se atraen y siguen siendo gas.', { t: tempTxt(G.T) }) };
-    if (G.modo === 'globo' && G.radioMedio > RADIO_MAX_GLOBO - 10 && G.presion > 1.15)
-        return { tag: i18n.t('AL LÍMITE'), col: COLS.cambio, txt: i18n.t('La goma ya no puede estirarse más. Las moléculas empujan más que el aire de fuera y la presión dentro sube por encima de 1 atm.') };
+    if (alLimite())
+        return { tag: i18n.t('AL LÍMITE'), col: COLS.cambio, txt: i18n.t('La goma ya no puede estirarse más y la presión dentro sube. Aguanta hasta {p} atm: si sigue subiendo, el globo explotará.', { p: P_ROTURA }) };
     if (G.modo === 'globo') {
         const t = tendenciaDe('V');
         if (t > 0) return { tag: i18n.t('SE INFLA'), col: COLS.gas, txt: i18n.t('Dentro, las moléculas empujan más que el aire de fuera: la goma cede y el globo crece hasta que los dos empujes se igualan.') };
@@ -299,6 +301,12 @@ function manometro(mx, my, mr, P) {
     stroke(tinta()); strokeWeight(3); fill('#5d7488'); circle(mx, my, 2 * (mr + 5));
     strokeWeight(2); fill(COL.esfera); circle(mx, my, 2 * mr);
     const ang = (p) => radians(-135 + 270 * p / escalaMano - 90);
+    // Con el globo, zona roja desde la presión que rompe la goma
+    if (G.modo === 'globo' && P_ROTURA < escalaMano) {
+        noFill(); stroke('#e0413a'); strokeWeight(5); strokeCap(SQUARE);
+        arc(mx, my, 2 * (mr - 6), 2 * (mr - 6), ang(P_ROTURA), ang(escalaMano));
+        strokeCap(ROUND);
+    }
     textFont(FUENTE_TEXTO); textStyle(BOLD); textSize(11); textAlign(CENTER, CENTER);
     for (let i = 0; i <= 4; i++) {
         const v = escalaMano * i / 4, a = ang(v);
@@ -353,6 +361,91 @@ function geomGlobo() {
     const R = R0 > 72 ? 72 + (R0 - 72) * 0.45 : R0;
     return { cx, neck, R, w: R, h: R * 1.08, cy: neck - R * 1.02 - 14 };
 }
+// ── El globo explota ─────────────────────────────────────────────
+// Primero «AL LÍMITE»: la goma no da más de sí y la presión sube. Si dentro
+// se pasa de P_ROTURA durante 4 s seguidos, la goma se rompe.
+const P_ROTURA = 2;             // atm que aguanta la goma
+let ESTALLIDO = null, tSobrePresion = null;
+function alLimite() { return G.modo === 'globo' && G.radioMedio > RADIO_MAX_GLOBO - 10 && G.presion > 1.15; }
+function vigilarRotura() {
+    if (ESTALLIDO || G.pausa) return;
+    if (alLimite() && G.presion > P_ROTURA) {
+        if (tSobrePresion == null) tSobrePresion = relojSim();
+        // 4 s seguidos: más que la media de 3 s de la presión, para que un cambio brusco
+        // de los mandos (el globo aún creciendo) no lo rompa antes de tiempo
+        if (relojSim() - tSobrePresion > 4000) estallar();
+    } else tSobrePresion = null;
+}
+function estallar() {
+    const g = geomGlobo();
+    // Trozos de goma que salen volando (objeto) y trozos de la membrana (modelo)
+    const trozos = [];
+    for (let i = 0; i < 9; i++) {
+        const a = -Math.PI / 2 + (i - 4) * 0.62 + random(-0.2, 0.2);
+        trozos.push({ a, v: random(2.2, 3.6), giro: random(-0.25, 0.25), tam: random(9, 16) });
+    }
+    const nodos = G.nodos.map(n => ({ x: n.x, y: n.y }));
+    ESTALLIDO = { t0: millis(), g, trozos, nodos };
+    tSobrePresion = null; CELEB = null; REF = null; G.marcas = [];
+    document.body.classList.add('estallado');
+    document.querySelectorAll('.mandos-gas input').forEach(el => { el.disabled = true; });
+    const b = $('btn-globo-nuevo'); if (b) { b.hidden = false; setTimeout(() => b.focus({ preventScroll: true }), 1200); }
+}
+function globoNuevo() {
+    reiniciar(G.T > 0 ? G.T : 273);
+}
+function quitarEstallido() {
+    ESTALLIDO = null; tSobrePresion = null;
+    document.body.classList.remove('estallado');
+    document.querySelectorAll('.mandos-gas input').forEach(el => { el.disabled = false; });
+    const b = $('btn-globo-nuevo'); if (b) b.hidden = true;
+}
+// Tras la rotura: las moléculas siguen en línea recta y salen al aire
+function pasoEstallido() {
+    if (G.pausa) return;
+    G.pasos++;
+    for (const p of G.particulas) { p.x += p.vx; p.y += p.vy; }
+    // El aire de fuera sigue ahí: rebota en el borde de la ventana del modelo
+    for (const p of G.aire) {
+        p.x += p.vx; p.y += p.vy;
+        const d = Math.hypot(p.x, p.y);
+        if (d > R_VENTANA_FIS) {
+            const nx = p.x / d, ny = p.y / d, vn = p.vx * nx + p.vy * ny;
+            if (vn > 0) { p.vx -= 2 * vn * nx; p.vy -= 2 * vn * ny; }
+        }
+    }
+}
+// Lo que queda en la boquilla y los trozos que vuelan
+function drawRestosGlobo(g) {
+    const { cx, neck, cy, w } = g, t = (millis() - ESTALLIDO.t0) / 1000;
+    // Destello de la rotura (líneas, sin texto)
+    if (t < 0.5 && !MOV_REDUCIDO) {
+        const a = 1 - t / 0.5, c = color(THEME.change); c.setAlpha(255 * a); stroke(c); strokeWeight(4);
+        for (let i = 0; i < 12; i++) {
+            const an = i * Math.PI / 6, r0 = w * (0.5 + t), r1 = w * (0.9 + 1.4 * t);
+            line(cx + cos(an) * r0, cy + sin(an) * r0, cx + cos(an) * r1, cy + sin(an) * r1);
+        }
+    }
+    // Trozos de goma en el aire
+    if (t < 1.4 && !MOV_REDUCIDO) {
+        const a = constrain(1.4 - t, 0, 1);
+        for (const f of ESTALLIDO.trozos) {
+            const d = w * 0.6 + f.v * 60 * t, x = cx + cos(f.a) * d, y = cy + sin(f.a) * d + 90 * t * t;
+            push(); translate(x, y); rotate(f.giro * t * 20);
+            const c = color(COL.latex); c.setAlpha(255 * a); stroke(tinta()); strokeWeight(2); fill(c);
+            beginShape(); vertex(-f.tam / 2, -f.tam / 4); quadraticVertex(0, -f.tam / 2, f.tam / 2, -f.tam / 5);
+            vertex(f.tam / 3, f.tam / 4); quadraticVertex(0, f.tam / 6, -f.tam / 2, f.tam / 4); endShape(CLOSE);
+            pop();
+        }
+    }
+    // Jirones colgando del cuello atado
+    stroke(tinta()); strokeWeight(2.5); fill(COL.latexOsc);
+    beginShape(); vertex(cx - 11, neck - 10); vertex(cx - 16, neck - 30); vertex(cx - 7, neck - 22); vertex(cx - 2, neck - 36);
+    vertex(cx + 4, neck - 21); vertex(cx + 14, neck - 29); vertex(cx + 11, neck - 10); endShape(CLOSE);
+    stroke(tinta()); strokeWeight(3); fill(COL.latexOsc);
+    beginShape(); vertex(cx - 11, neck - 12); quadraticVertex(cx, neck - 4, cx + 11, neck - 12); vertex(cx + 12, neck + 4); quadraticVertex(cx, neck + 9, cx - 12, neck + 4); endShape(CLOSE);
+}
+
 function drawGlobo() {
     const g = geomGlobo(), { cx, neck, w, h, cy } = g;
     foco(cx, cy + 20, 190, 170);
@@ -364,35 +457,38 @@ function drawGlobo() {
     tubo([[cx + 9, 270], [338, 270], [338, 196 + 47]]);
     tubo([[cx - 9, 270], [96, 270]]);
     llave(118, 270);
-    manometro(338, 196, 42, G.presion);
-    // Globo: forma de pera, goma con brillo
-    const ctx = drawingContext;
-    const camino = () => {
-        beginShape();
-        vertex(cx, neck - 10);
-        bezierVertex(cx - w * 0.35, neck - 22, cx - w * 1.02, cy + h * 0.55, cx - w, cy);
-        bezierVertex(cx - w * 0.98, cy - h * 0.75, cx - w * 0.5, cy - h, cx, cy - h);
-        bezierVertex(cx + w * 0.5, cy - h, cx + w * 0.98, cy - h * 0.75, cx + w, cy);
-        bezierVertex(cx + w * 1.02, cy + h * 0.55, cx + w * 0.35, neck - 22, cx, neck - 10);
-        endShape(CLOSE);
-    };
-    const bx = cx - w, by = cy - h, bw = 2 * w, bh = neck - 10 - by;
-    const gr = ctx.createRadialGradient(bx + bw * 0.38, by + bh * 0.32, 0, bx + bw * 0.38, by + bh * 0.32, Math.max(bw, bh) * 0.75);
-    gr.addColorStop(0, COL.latexClaro); gr.addColorStop(0.55, COL.latex); gr.addColorStop(1, COL.latexOsc);
-    stroke(tinta()); strokeWeight(5); strokeJoin(ROUND); fill(COL.latex);
-    ctx.save(); ctx.fillStyle = gr; camino(); ctx.restore();
-    // brillos
-    noStroke(); fill(255, 255, 255, 90);
-    push(); translate(cx - w * 0.42, cy - h * 0.42); rotate(radians(28)); ellipse(0, 0, w * 0.32, h * 0.6); pop();
-    fill(255, 255, 255, 76); ellipse(cx - w * 0.62, cy + h * 0.08, w * 0.1, h * 0.18);
-    noFill(); stroke(COL.latexOsc); strokeWeight(3);
-    const c = color(COL.latexOsc); c.setAlpha(150); stroke(c);
-    beginShape(); vertex(cx + w * 0.62, cy + h * 0.25); quadraticVertex(cx + w * 0.8, cy - h * 0.1, cx + w * 0.66, cy - h * 0.5); endShape();
-    // cuello enrollado atado a la boquilla
-    stroke(tinta()); strokeWeight(3); fill(COL.latexOsc);
-    beginShape(); vertex(cx - 11, neck - 12); quadraticVertex(cx, neck - 4, cx + 11, neck - 12); vertex(cx + 12, neck + 4); quadraticVertex(cx, neck + 9, cx - 12, neck + 4); endShape(CLOSE);
-    noFill(); stroke(COL.latexBrillo); strokeWeight(2);
-    beginShape(); vertex(cx - 12, neck - 2); quadraticVertex(cx, neck + 3, cx + 12, neck - 2); endShape();
+    manometro(338, 196, 42, ESTALLIDO ? 1 : G.presion);
+    if (ESTALLIDO) drawRestosGlobo(ESTALLIDO.g);
+    else {
+        // Globo: forma de pera, goma con brillo
+        const ctx = drawingContext;
+        const camino = () => {
+            beginShape();
+            vertex(cx, neck - 10);
+            bezierVertex(cx - w * 0.35, neck - 22, cx - w * 1.02, cy + h * 0.55, cx - w, cy);
+            bezierVertex(cx - w * 0.98, cy - h * 0.75, cx - w * 0.5, cy - h, cx, cy - h);
+            bezierVertex(cx + w * 0.5, cy - h, cx + w * 0.98, cy - h * 0.75, cx + w, cy);
+            bezierVertex(cx + w * 1.02, cy + h * 0.55, cx + w * 0.35, neck - 22, cx, neck - 10);
+            endShape(CLOSE);
+        };
+        const bx = cx - w, by = cy - h, bw = 2 * w, bh = neck - 10 - by;
+        const gr = ctx.createRadialGradient(bx + bw * 0.38, by + bh * 0.32, 0, bx + bw * 0.38, by + bh * 0.32, Math.max(bw, bh) * 0.75);
+        gr.addColorStop(0, COL.latexClaro); gr.addColorStop(0.55, COL.latex); gr.addColorStop(1, COL.latexOsc);
+        stroke(tinta()); strokeWeight(5); strokeJoin(ROUND); fill(COL.latex);
+        ctx.save(); ctx.fillStyle = gr; camino(); ctx.restore();
+        // brillos
+        noStroke(); fill(255, 255, 255, 90);
+        push(); translate(cx - w * 0.42, cy - h * 0.42); rotate(radians(28)); ellipse(0, 0, w * 0.32, h * 0.6); pop();
+        fill(255, 255, 255, 76); ellipse(cx - w * 0.62, cy + h * 0.08, w * 0.1, h * 0.18);
+        noFill(); stroke(COL.latexOsc); strokeWeight(3);
+        const c = color(COL.latexOsc); c.setAlpha(150); stroke(c);
+        beginShape(); vertex(cx + w * 0.62, cy + h * 0.25); quadraticVertex(cx + w * 0.8, cy - h * 0.1, cx + w * 0.66, cy - h * 0.5); endShape();
+        // cuello enrollado atado a la boquilla
+        stroke(tinta()); strokeWeight(3); fill(COL.latexOsc);
+        beginShape(); vertex(cx - 11, neck - 12); quadraticVertex(cx, neck - 4, cx + 11, neck - 12); vertex(cx + 12, neck + 4); quadraticVertex(cx, neck + 9, cx - 12, neck + 4); endShape(CLOSE);
+        noFill(); stroke(COL.latexBrillo); strokeWeight(2);
+        beginShape(); vertex(cx - 12, neck - 2); quadraticVertex(cx, neck + 3, cx + 12, neck - 2); endShape();
+    }
     // Sonda del termómetro hasta el centro del globo, y su cable a la lectura
     sondaYCable(cx, 288, cy + 4, [[cx - 10, 282], [54, 282], [30, 258], [30, 120]]);
     lectura(0, 70, 104, unidadC ? String(G.T - 273) : String(G.T), unidadC ? '°C' : 'K', 34);
@@ -491,17 +587,33 @@ function drawModelo() {
         ctx.save(); ctx.beginPath();
         for (const p of G.aire) { const x = X(p.x), y = Y(p.y); ctx.moveTo(x + ra, y); ctx.arc(x, y, ra, 0, Math.PI * 2); }
         ctx.fillStyle = THEME.aire; ctx.fill(); ctx.restore();
-        // Membrana
-        const caminoMembrana = () => { beginShape(); for (const n of G.nodos) vertex(X(n.x), Y(n.y)); endShape(CLOSE); };
-        const rel = color(COL.latex); rel.setAlpha(18); noStroke(); fill(rel); caminoMembrana();
-        if (opciones.medio) {
-            noFill(); stroke(THEME.textDim); strokeWeight(1.6); ctx.setLineDash([6, 7]);
-            circle(cx, cy, 2 * G.radioMedio * k); ctx.setLineDash([]);
+        if (ESTALLIDO) {
+            // La goma rota: trozos de membrana que salen hacia fuera y se desvanecen
+            dibujarMoleculas(X, Y, rD, k);
+            const t = (millis() - ESTALLIDO.t0) / 1000;
+            if (t < 1.2) {
+                const ns = ESTALLIDO.nodos, n = ns.length, a = 1 - t / 1.2;
+                for (let q = 0; q < 6; q++) {
+                    const i0 = Math.floor(q * n / 6) + 1, i1 = Math.floor((q + 1) * n / 6) - 1;
+                    const mid = ns[Math.floor((i0 + i1) / 2)], d = Math.hypot(mid.x, mid.y) || 1;
+                    const dx = mid.x / d * 140 * t, dy = mid.y / d * 140 * t;
+                    const c = color(COL.latex); c.setAlpha(255 * a); noFill(); stroke(c); strokeWeight(ESC_MOVIL ? 3 : 3.5);
+                    beginShape(); for (let i = i0; i <= i1; i++) vertex(X(ns[i].x + dx), Y(ns[i].y + dy)); endShape();
+                }
+            }
+        } else {
+            // Membrana
+            const caminoMembrana = () => { beginShape(); for (const n of G.nodos) vertex(X(n.x), Y(n.y)); endShape(CLOSE); };
+            const rel = color(COL.latex); rel.setAlpha(18); noStroke(); fill(rel); caminoMembrana();
+            if (opciones.medio) {
+                noFill(); stroke(THEME.textDim); strokeWeight(1.6); ctx.setLineDash([6, 7]);
+                circle(cx, cy, 2 * G.radioMedio * k); ctx.setLineDash([]);
+            }
+            dibujarMoleculas(X, Y, rD, k);
+            noFill(); strokeJoin(ROUND);
+            stroke(tinta()); strokeWeight(ESC_MOVIL ? 6 : 7); caminoMembrana();
+            stroke(COL.latex); strokeWeight(ESC_MOVIL ? 3 : 3.5); caminoMembrana();
         }
-        dibujarMoleculas(X, Y, rD, k);
-        noFill(); strokeJoin(ROUND);
-        stroke(tinta()); strokeWeight(ESC_MOVIL ? 6 : 7); caminoMembrana();
-        stroke(COL.latex); strokeWeight(ESC_MOVIL ? 3 : 3.5); caminoMembrana();
     } else {
         const x0 = X(-RECT_W / 2), x1 = X(RECT_W / 2), bot = Y(RECT_FONDO), top = Y(RECT_FONDO - G.H);
         noStroke(); fill(THEME.interior); rect(x0, top, x1 - x0, bot - top);
@@ -636,6 +748,7 @@ function relacion(a, b) {
 let lectCache = { t: -1e9, P: 0, V: 0 }, mensajeCache = { clave: '' };
 function lecturas() {
     const ahora = millis();
+    if (ESTALLIDO) return { t: ahora, P: 1, V: NaN };
     if (ahora - lectCache.t >= 250 || G.pausa) lectCache = { t: ahora, P: G.presion, V: volSuave };
     return lectCache;
 }
@@ -667,7 +780,7 @@ function drawPanelEstado(m) {
     const cel = celebrando() && CELEB.ref ? CELEB.ref : null, L = lecturas();
     const filas = [
         ['Presión', fmt(L.P, 2) + ' atm', cel ? relacion(L.P, cel.P) : ''],
-        ['Volumen', fmt(L.V, 2) + ' L', cel ? relacion(L.V, cel.V) : ''],
+        ['Volumen', isNaN(L.V) ? '—' : fmt(L.V, 2) + ' L', cel ? relacion(L.V, cel.V) : ''],
         ['Temperatura', tempTxt(G.T), cel ? relacion(G.T, cel.T) : ''],
         ['Moléculas', String(G.N), cel ? relacion(G.N, cel.N) : ''],
     ];
@@ -682,6 +795,7 @@ function drawPanelEstado(m) {
     });
     yy += 56 + 4 * paso - 8;
     stroke(THEME.border); strokeWeight(1.5); line(x + pad, yy, x + w - pad, yy);
+    if (ESTALLIDO) return;            // sin pared no hay choques que contar
     const fsD = compacto ? 14.5 : 15.5;
     textFont(FUENTE_TEXTO); textSize(fsD); noStroke(); fill(THEME.text);
     textoRico(partirRico(trozosRicos(i18n.t('Choques contra la pared: <strong>{c}</strong> cada segundo', { c: G.choquesSeg })), w - 2 * pad), x + pad, yy + 12, fsD + 6);
@@ -799,6 +913,7 @@ function elegirEjes(e, porDocente) {
     document.querySelectorAll('[data-ejes]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.ejes === e)));
 }
 function elegirModo(m) {
+    if (ESTALLIDO) reiniciar(G.T > 0 ? G.T : 273);
     if (m !== G.modo) {
         cambiarModo(m);
         borrarGrafica(); REF = null; CELEB = null; tCambio = relojSim(); embolo = null; volSuave = G.area * LITROS_POR_PX2;
@@ -811,8 +926,9 @@ function elegirModo(m) {
     if (typeof CV_W !== 'undefined' && ESC_MOVIL != null) rehacerComposicion();
     if (typeof pintarRetos === 'function') pintarRetos();
 }
-function reiniciar() {
-    reiniciarFisica(273, 50);
+function reiniciar(T = 273) {
+    quitarEstallido();
+    reiniciarFisica(T, 50);
     volSuave = G.area * LITROS_POR_PX2; embolo = null;
     borrarGrafica(); REF = null; CELEB = null; tCambio = relojSim();
     if (G.pausa) alternarPausa();
@@ -845,7 +961,8 @@ function setupControles() {
     document.querySelectorAll('[data-modo]').forEach(b => b.addEventListener('click', () => elegirModo(b.dataset.modo)));
     document.querySelectorAll('[data-ejes]').forEach(b => b.addEventListener('click', () => elegirEjes(b.dataset.ejes, true)));
     $('btn-pausa').addEventListener('click', alternarPausa);
-    $('btn-reiniciar').addEventListener('click', reiniciar);
+    $('btn-reiniciar').addEventListener('click', () => reiniciar());
+    $('btn-globo-nuevo').addEventListener('click', globoNuevo);
     // Ajustes de vista (⚙)
     $('check-color').addEventListener('change', (e) => { opciones.color = e.target.checked; });
     $('check-estelas').addEventListener('change', (e) => { opciones.estelas = e.target.checked; });
@@ -927,15 +1044,14 @@ function draw() {
     actualizarTema(TEMA_PROPIO);
     clear();
     fuenteJuego();
-    pasoFisica();
+    if (ESTALLIDO) pasoEstallido(); else { pasoFisica(); vigilarRotura(); }
     if (volSuave == null) volSuave = G.volumen;
     if (!G.pausa) volSuave += (G.volumen - volSuave) * (MOV_REDUCIDO ? 1 : 0.05);
     if (frameCount % 15 === 0 && !G.pausa && medidaLista()) {
         tendencia.push({ V: volSuave, P: G.presion, t: millis() });
         while (tendencia.length && millis() - tendencia[0].t > 1600) tendencia.shift();
     }
-    registrarGrafica();
-    comprobarLeyes();
+    if (!ESTALLIDO) { registrarGrafica(); comprobarLeyes(); }
     if (G.modo === 'rigido') yEmbolo();
     drawEscena();
 }
