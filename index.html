@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulación: presión de gases</title>
+    <title>Cinética de gases — Simulación interactiva</title>
     <!-- Página pública de esta simulación: simulaciencia.es. Esta dirección (github.io) es la que carga la web dentro de un iframe; la canónica evita que los buscadores la indexen como página aparte. -->
-    <meta name="description" content="Modelo de partículas que relaciona presión, temperatura y volumen según la teoría cinético-molecular: comprueba las leyes de Boyle y de Gay-Lussac.">
+    <meta name="description" content="Mira por dentro un globo y un cilindro con émbolo: las moléculas del gas chocan contra las paredes y esos choques son la presión. Comprueba las leyes de Boyle, Charles, Gay-Lussac y Avogadro.">
     <link rel="canonical" id="canonical" href="https://simulaciencia.es/simulaciones/gases/">
     <script>(function(){var d={"en":"en/simulations/","ca":"ca/simulacions/","eu":"eu/simulazioak/","gl":"gl/simulacions/"}[new URLSearchParams(location.search).get('lang')];if(d)document.getElementById('canonical').href='https://simulaciencia.es/'+d+'gases/';})();</script>
     <script src="js/i18n-en.js"></script>
@@ -16,227 +16,207 @@
     <script src="js/vendor/p5.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/estilo-juego.css">
+    <link rel="stylesheet" href="css/escena-comun.css">
+    <link rel="stylesheet" href="css/escena.css">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script src="js/estadisticas.js" data-sim="sim-gases"></script>
-    <script src="js/sello.js" data-contenedor="main.simulation-panel" data-esquina="bl"></script>
+    <script src="js/sello.js" data-contenedor="main.simulation-panel" data-esquina="br" data-margen-derecho="14"></script>
 </head>
-<body>
-    <!-- Tema guardado, antes de pintar: Oscuro («Pizarra») por defecto; ?tema=claro|oscuro|contraste manda (ver js/estilo.js) -->
-    <script>(function(){var t=null;try{t=localStorage.getItem('sim-gases-tema');}catch(e){}var q={claro:'light',contraste:'contrast',oscuro:'dark'}[new URLSearchParams(location.search).get('tema')];if(q)t=q;if(t==='light'||t==='contrast')document.body.classList.add('theme-'+t);})();</script>
-    <div class="app-container">
-        <!-- PANEL IZQUIERDO: Controles físicos -->
-        <aside class="control-panel">
-            <header>
-                <h1>Cinética de gases</h1>
-                <p class="subtitle">Modelo de presión microscópica</p>
-            </header>
-            
-            <hr class="divider">
+<body class="modo-globo">
+    <!-- Tema guardado, antes de pintar: Pizarra (oscuro) por defecto; ?tema=simulaciencia|claro|oscuro|contraste manda -->
+    <script>(function(){var t=null;try{t=localStorage.getItem('sim-gases-tema');}catch(e){}var q={simulaciencia:'marca',marca:'marca',claro:'light',contraste:'contrast',oscuro:'dark'}[new URLSearchParams(location.search).get('tema')];if(q)t=q;var c=document.body.classList;if(t==='marca')c.add('theme-light','theme-marca');else if(t==='light'||t==='contrast')c.add('theme-'+t);})();</script>
 
-            <section class="control-group">
-                <h2>Configuración del gas</h2>
-                
-                <!-- Cantidad de partículas -->
-                <div class="input-wrapper">
-                    <div class="label-container">
-                        <label for="input-direct-particles">Cantidad de partículas</label>
-                    </div>
-                    <div class="stepper-container">
-                        <button type="button" class="stepper-btn" aria-label="Quitar partículas" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">−</button>
-                        <div class="stepper-display">
-                            <input type="number" id="input-direct-particles" class="input-inline-editable" value="50" min="1" max="500">
-                        </div>
-                        <button type="button" class="stepper-btn" aria-label="Añadir partículas" onmousedown="iniciarAccionContinuas(() => ajustarParticulasBotones(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
-                    </div>
-                    <div id="particle-slider-container"></div>
-                    <div class="slider-bounds">
-                        <span>1</span>
-                        <span>500</span>
-                    </div>
+    <!-- ── CABECERA COMÚN ─────────────────────────────────────── -->
+    <header class="barra-sup">
+        <div class="marca-sim">
+            <svg class="header-icon-svg" width="42" height="42" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="1.2" y="1.2" width="37.6" height="37.6" rx="11" fill="#1f5d8c" stroke="#071a2b" stroke-width="2.4"/>
+                <ellipse cx="20" cy="17" rx="10" ry="11.5" fill="#e8435a" stroke="#071a2b" stroke-width="2.3"/>
+                <path d="M17.5 29.5 L20 27.5 L22.5 29.5 Z" fill="#e8435a" stroke="#071a2b" stroke-width="1.8"/>
+                <path d="M20 30 q-3 4 0 7" stroke="#cfe3f2" stroke-width="1.6" fill="none"/>
+                <ellipse cx="16" cy="13" rx="2.6" ry="4" fill="#ffffff" opacity=".55"/>
+            </svg>
+            <h1>Cinética de gases</h1>
+        </div>
+        <div class="botones-sup">
+            <button id="btn-ayuda" type="button" class="boton-suelto boton-redondo" aria-expanded="false" aria-controls="panel-ayuda" title="¿Qué es la presión de un gas?" aria-label="¿Qué es la presión de un gas?">?</button>
+            <button id="btn-retos" type="button" class="boton-suelto boton-retos" aria-expanded="false" aria-controls="panel-retos"><span aria-hidden="true">★</span> <span class="btn-retos-txt">Retos</span></button>
+            <button id="theme-btn" class="theme-btn" title="Ajustes" aria-label="Ajustes" aria-expanded="false">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58
+                    c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96
+                    c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84
+                    c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33
+                    c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58
+                    C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61
+                    l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94
+                    l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54
+                    c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32
+                    c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z
+                    M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                </svg>
+            </button>
+            <div id="theme-panel" class="theme-panel" aria-hidden="true">
+                <p class="theme-panel-title">Vista de moléculas</p>
+                <label class="check-row" for="check-color">
+                    <input type="checkbox" id="check-color" checked>
+                    <span>Color por rapidez</span>
+                </label>
+                <label class="check-row" for="check-estelas">
+                    <input type="checkbox" id="check-estelas" checked>
+                    <span>Mostrar la velocidad (estelas)</span>
+                </label>
+                <label class="check-row only-globo" for="check-medio">
+                    <input type="checkbox" id="check-medio">
+                    <span>Tamaño medio del globo</span>
+                </label>
+                <div class="fila-ajuste">
+                    <label for="sl-tam">Tamaño de las moléculas</label>
+                    <span id="val-tam" class="valor">2</span>
                 </div>
-
-                <!-- Temperatura -->
-                <div class="input-wrapper">
-                    <div class="label-container">
-                        <label for="input-direct-temp">Temperatura</label>
-                        <div class="scale-toggle">
-                            <span class="toggle-label">K</span>
-                            <label class="switch">
-                                <input type="checkbox" id="check-escala-temp" aria-label="Temperatura en °C">
-                                <span class="slider-toggle round"></span>
-                            </label>
-                            <span class="toggle-label">°C</span>
-                        </div>
-                    </div>
-                    <div class="stepper-container">
-                        <button type="button" class="stepper-btn" aria-label="Bajar la temperatura" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(-10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">−</button>
-                        <div class="stepper-display">
-                            <input type="number" id="input-direct-temp" class="input-inline-editable" value="273" min="0" max="500">
-                            <span id="unit-temp-view" class="unit">K</span>
-                        </div>
-                        <button type="button" class="stepper-btn" aria-label="Subir la temperatura" onmousedown="iniciarAccionContinuas(() => ajustarTemperaturaBotones(10))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
-                    </div>
-                    <div id="temp-slider-container"></div>
-                    <div class="slider-bounds">
-                        <span id="lbl-temp-min">0 K</span>
-                        <span id="lbl-temp-max">500 K</span>
-                    </div>
-                </div>
-            </section>
-
-            <hr class="divider">
-
-            <section class="control-group">
-                <h2>Comportamiento de recipiente</h2>
-                <div class="input-wrapper">
-                    <select id="select-pared" class="custom-select" aria-label="Comportamiento de recipiente">
-                        <option value="flexible" selected>Membrana flexible (globo)</option>
-                        <option value="fija">Pared rígida (fija)</option>
-                    </select>
-                </div>
-
-                <div id="wrapper-radio-manual" class="input-wrapper hidden">
-                    <label>Volumen del recipiente</label>
-                    <div class="stepper-container">
-                        <button type="button" class="stepper-btn" aria-label="Reducir el volumen" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(-5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">−</button>
-                        <div class="stepper-display">
-                            <span id="input-radio-view">1,15</span>
-                            <span class="unit">L</span>
-                        </div>
-                        <button type="button" class="stepper-btn" aria-label="Aumentar el volumen" onmousedown="iniciarAccionContinuas(() => ajustarRadioManual(5))" onmouseup="detenerAccionContinuas()" onmouseleave="detenerAccionContinuas()">+</button>
-                    </div>
-                </div>
-            </section>
-
-            <hr class="divider">
-
-            <section class="control-group">
-                <h2>Datos físicos</h2>
-                <div class="dashboard-static-group horizontal-layout">
-                    <div class="card card-data">
-                        <h3>Presión (P)</h3>
-                        <div class="metric"><span id="metric-presion-fisica">0,00</span> <small>atm</small></div>
-                    </div>
-                    <div class="card card-data">
-                        <h3>Volumen (V)</h3>
-                        <div class="metric"><span id="metric-volumen-fisico">0,00</span> <small>L</small></div>
-                    </div>
-                    <div class="card hidden-radio-px">
-                        <h3>Radio de la pared (R)</h3>
-                        <div class="metric-secondary"><span id="metric-radio">90.0</span> px</div>
-                    </div>
-                </div>
-                <!-- La gráfica P-V es una herramienta de la explicación, no un ajuste visual -->
-                <div class="input-wrapper checked-wrapper">
-                    <input type="checkbox" id="check-mostrar-grafica">
-                    <label for="check-mostrar-grafica">Mostrar gráfica P-V</label>
-                </div>
-            </section>
-
-            <hr class="divider">
-
-            <section class="control-group">
-                <details class="custom-details">
-                    <summary>Monitorización del sistema</summary>
-                    <div class="details-content">
-                        <div class="card Highlight">
-                            <h3>Frecuencia de impactos</h3>
-                            <div class="metric"><span id="metric-frecuencia">0</span> <small>choques/s</small></div>
-                        </div>
-                        <div class="card">
-                            <h3>Choques totales</h3>
-                            <div class="metric-secondary"><span id="metric-totales">0</span></div>
-                        </div>
-                    </div>
-                </details>
-            </section>
-        </aside>
-
-        <!-- AREA CENTRAL: Simulación -->
-        <main class="simulation-panel">
-            <button id="play-pause-btn" class="toggle-btn play-btn" onclick="alternarReproduccion()">⏸ Pausar</button>
-            <button id="drawer-toggle-btn" class="toggle-btn drawer-btn" onclick="alternarDrawer()">⚙ Ajustes visuales</button>
-            <div id="canvas-container"></div>
-        </main>
-
-        <!-- PANEL DERECHO: Cajón Desplegable (Drawer) -->
-        <aside id="visual-drawer" class="visual-drawer drawer-closed">
-            <div class="drawer-header">
-                <h2>Ajustes visuales</h2>
-                <button class="close-drawer-btn" onclick="alternarDrawer()" aria-label="Cerrar">×</button>
-            </div>
-            
-            <div class="drawer-content">
-                <!-- Tema visual -->
-                <div class="input-wrapper">
-                    <label id="lbl-tema">Tema visual</label>
-                    <div class="theme-options" role="radiogroup" aria-labelledby="lbl-tema">
-                        <button type="button" class="theme-opt active" data-theme="dark" role="radio" aria-checked="true"><span class="theme-swatch dark-swatch"></span>Oscuro</button>
-                        <button type="button" class="theme-opt" data-theme="light" role="radio" aria-checked="false"><span class="theme-swatch light-swatch"></span>Claro</button>
-                        <button type="button" class="theme-opt" data-theme="contrast" role="radio" aria-checked="false"><span class="theme-swatch contrast-swatch"></span>Alto contraste</button>
-                    </div>
-                </div>
-
-                <!-- Tamaño partícula -->
-                <div class="input-wrapper">
-                    <div class="label-container">
-                        <label>Tamaño partícula</label>
-                        <span id="size-val" class="value-badge">2 px</span>
-                    </div>
-                    <div id="size-slider-container"></div>
-                </div>
-
-                <!-- Color partículas -->
-                <div class="input-wrapper">
-                    <label for="color-picker-particula">Color partículas</label>
-                    <div class="color-picker-container">
-                        <input type="color" id="color-picker-particula" class="custom-color-picker" value="#00c8ff">
-                        <span id="color-hex-val" class="color-text">#00C8FF</span>
-                    </div>
-                </div>
-
-                <!-- Color contenedor -->
-                <div class="input-wrapper">
-                    <label for="color-picker-circulo">Color membrana</label>
-                    <div class="color-picker-container">
-                        <input type="color" id="color-picker-circulo" class="custom-color-picker" value="#ff4646">
-                        <span id="color-circulo-hex-val" class="color-text">#FF4646</span>
-                    </div>
-                </div>
-
-                <!-- Color del Radio Promedio -->
-                <div class="input-wrapper" id="wrapper-color-promedio">
-                    <label for="color-picker-promedio">Color línea promedio</label>
-                    <div class="color-picker-container">
-                        <input type="color" id="color-picker-promedio" class="custom-color-picker" value="#2ecc71">
-                        <span id="color-promedio-hex-val" class="color-text">#2ECC71</span>
-                    </div>
-                </div>
-
-                <!-- Formato del trazo -->
-                <div class="input-wrapper" id="wrapper-format-promedio">
-                    <label for="select-formato-promedio">Formato línea promedio</label>
-                    <select id="select-formato-promedio" class="custom-select">
-                        <option value="punteado" selected>Línea discontinua</option>
-                        <option value="continuo">Línea continua</option>
-                    </select>
-                </div>
-                
-                <div class="input-wrapper checked-wrapper">
-                    <input type="checkbox" id="check-termografico" checked>
-                    <label for="check-termografico">Color según velocidad</label>
-                </div>
-
-
-                <div class="input-wrapper checked-wrapper">
-                    <input type="checkbox" id="check-fullscreen">
-                    <label for="check-fullscreen">Pantalla completa</label>
+                <input type="range" id="sl-tam" min="1" max="15" value="2" step="1">
+                <label class="check-row" for="check-pantalla">
+                    <input type="checkbox" id="check-pantalla">
+                    <span>Pantalla completa</span>
+                </label>
+                <p class="theme-panel-title">Tema visual</p>
+                <div class="theme-options">
+                    <button class="theme-opt" data-theme="marca">
+                        <span class="theme-swatch marca-swatch"></span>SimulaCiencia
+                    </button>
+                    <button class="theme-opt active" data-theme="dark">
+                        <span class="theme-swatch dark-swatch"></span>Oscuro
+                    </button>
+                    <button class="theme-opt" data-theme="light">
+                        <span class="theme-swatch light-swatch"></span>Claro
+                    </button>
+                    <button class="theme-opt" data-theme="contrast">
+                        <span class="theme-swatch contrast-swatch"></span>Alto contraste
+                    </button>
                 </div>
             </div>
-        </aside>
+        </div>
+    </header>
+
+    <!-- ── RECIPIENTE ───────────────────────────────────────────── -->
+    <div class="barra-sus">
+        <span class="barra-sus-label" id="lbl-recipiente">Recipiente</span>
+        <div class="carril recipientes" role="radiogroup" aria-labelledby="lbl-recipiente">
+            <button type="button" class="carril-btn" data-modo="globo" role="radio" aria-checked="true"><i class="punto"></i>Globo</button>
+            <button type="button" class="carril-btn" data-modo="rigido" role="radio" aria-checked="false"><i class="punto"></i><span class="solo-ancho">Recipiente rígido</span><span class="solo-movil">Rígido</span></button>
+        </div>
+        <p id="frase" class="sus-info"></p>
+        <button id="btn-pausa" type="button" class="boton-suelto" aria-pressed="false" aria-keyshortcuts="Space" title="Pausar o reanudar (barra espaciadora)"><span class="btn-txt">⏸ Pausar</span></button>
+        <button id="btn-reiniciar" type="button" class="boton-suelto" aria-keyshortcuts="R" title="Volver al principio (tecla R)"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5a5.5 5.5 0 1 1-5.2 3.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1.6 2.2l1.5 4.3 4.2-1.6z"/></svg><span class="btn-txt">Reiniciar</span></button>
     </div>
+
+    <div class="app-container">
+
+        <!-- ── PANEL DE SIMULACIÓN ───────────────────────────────── -->
+        <main class="simulation-panel">
+            <div id="escena" class="escena">
+                <div id="canvas-container"></div>
+                <!-- Mandos del gas, colocados bajo el recipiente dibujado -->
+                <div class="mandos-lienzo mandos-gas">
+                    <div class="bloque-mando">
+                        <div class="fila-slider">
+                            <label for="sl-temp">Temperatura</label>
+                            <div class="carril mini unidades" role="radiogroup" aria-label="Unidad de temperatura">
+                                <button type="button" class="carril-btn" data-unidad="K" role="radio" aria-checked="true">K</button>
+                                <button type="button" class="carril-btn" data-unidad="C" role="radio" aria-checked="false">°C</button>
+                            </div>
+                            <span class="valor-slider"><input type="text" id="num-temp" class="num-valor" inputmode="decimal" value="273" aria-label="Temperatura (escribe el valor)"><span id="uni-temp">K</span></span>
+                        </div>
+                        <input type="range" id="sl-temp" min="0" max="500" value="273" step="1">
+                        <div class="slider-bounds"><span id="min-temp">0 K</span><span id="max-temp">500 K</span></div>
+                    </div>
+                    <div class="bloque-mando">
+                        <div class="fila-slider">
+                            <label for="sl-mol">Moléculas</label>
+                            <span class="valor-slider"><input type="text" id="num-mol" class="num-valor" inputmode="numeric" value="50" aria-label="Moléculas (escribe el número)"></span>
+                        </div>
+                        <input type="range" id="sl-mol" min="1" max="500" value="50" step="1">
+                        <div class="slider-bounds"><span>1</span><span>500</span></div>
+                    </div>
+                    <div class="bloque-mando only-rigido">
+                        <div class="fila-slider">
+                            <label for="sl-vol">Volumen</label>
+                            <span class="valor-slider"><input type="text" id="num-vol" class="num-valor" inputmode="decimal" value="1,20" aria-label="Volumen en litros (escribe el valor)"><span>L</span></span>
+                        </div>
+                        <input type="range" id="sl-vol" min="9" max="460" value="120" step="1">
+                        <div class="slider-bounds"><span>0,09 L</span><span>4,60 L</span></div>
+                    </div>
+                    <p class="nota-mando only-globo">La llave del tubo mete o saca moléculas del globo.</p>
+                </div>
+                <!-- Ejes de la gráfica, sobre la tira de papel -->
+                <div class="mandos-lienzo mandos-grafica">
+                    <div class="carril ejes" role="radiogroup" aria-label="Gráfica">
+                        <button type="button" class="carril-btn" data-ejes="pv" role="radio" aria-checked="false">P–V</button>
+                        <button type="button" class="carril-btn" data-ejes="vt" role="radio" aria-checked="true">V–T</button>
+                        <button type="button" class="carril-btn" data-ejes="pt" role="radio" aria-checked="false">P–T</button>
+                    </div>
+                </div>
+            </div>
+            <div id="anuncio" class="sr-only" aria-live="polite"></div>
+        </main>
+    </div>
+
+    <!-- ── AYUDA: ¿QUÉ ES LA PRESIÓN DE UN GAS? ─────────────────── -->
+    <div id="panel-ayuda" class="panel-flotante panel-ayuda" hidden>
+        <div class="panel-cab"><h2>¿Qué es la presión de un gas?</h2><button type="button" class="boton-cerrar" data-cerrar="panel-ayuda" aria-label="Cerrar">✕</button></div>
+        <p data-i18n="intro-presion">
+            Un gas está formado por <strong>moléculas</strong> que se mueven sin parar y en línea recta
+            hasta que chocan. Entre ellas no hay nada. Cada choque contra la pared es un pequeño empujón:
+            la suma de todos esos empujones es la <strong>presión</strong> del gas.
+        </p>
+        <h3>Las leyes de los gases</h3>
+        <div class="card edu-card">
+            <div class="formula-list">
+                <div class="formula"><span class="formula-name">Boyle</span><span class="formula-eq">P · V = constante (T fija)</span></div>
+                <div class="formula"><span class="formula-name">Charles</span><span class="formula-eq">V / T = constante (P fija)</span></div>
+                <div class="formula"><span class="formula-name">Gay-Lussac</span><span class="formula-eq">P / T = constante (V fijo)</span></div>
+                <div class="formula"><span class="formula-name">Avogadro</span><span class="formula-eq">V / N = constante (P y T fijas)</span></div>
+            </div>
+        </div>
+        <ul class="key-ideas">
+            <li data-i18n="idea-temperatura">La <strong>temperatura</strong> mide lo deprisa que se mueven las moléculas. Las moléculas no se hacen más grandes al calentarlas.</li>
+            <li data-i18n="idea-kelvin">Las leyes funcionan con la temperatura en <strong>kelvin</strong>: a 0 K las moléculas se quedarían quietas.</li>
+            <li data-i18n="idea-globo">El globo crece o encoge hasta que las moléculas de dentro empujan igual que el aire de fuera (1 atm).</li>
+        </ul>
+        <p class="nota">El modelo es un gas ideal dibujado en un plano: las moléculas no se atraen y el volumen se calcula a partir del área del dibujo. La presión es la media de los choques de los últimos 3 segundos.</p>
+    </div>
+
+    <!-- ── RETOS Y ÁLBUM (ocultos por defecto) ──────────────────── -->
+    <aside id="panel-retos" class="panel-retos" hidden aria-labelledby="titulo-retos">
+        <div class="panel-cab"><h2 id="titulo-retos">Retos <small id="retos-modo" class="retos-modo"></small></h2><button type="button" class="boton-cerrar" data-cerrar="panel-retos" aria-label="Cerrar">✕</button></div>
+        <ol id="lista-retos" class="lista-retos"></ol>
+        <div class="album-cab"><h2>Álbum de leyes</h2><span id="album-cuenta" class="album-cuenta">0 / 5</span></div>
+        <div id="album-mini" class="album-mini album-leyes"></div>
+        <p class="nota">Cada ley se gana al comprobarla de verdad en la simulación.</p>
+        <div class="retos-botones">
+            <button type="button" id="btn-ver-album" class="boton-suelto">Ver el álbum</button>
+            <button type="button" id="btn-borrar" class="boton-suelto boton-peligro">↺ Borrar lo conseguido</button>
+        </div>
+        <div id="confirmar-borrar" class="confirmar" hidden>
+            <p>¿Borrar los retos y sellos conseguidos en este navegador?</p>
+            <div class="retos-botones">
+                <button type="button" id="btn-borrar-si" class="boton-suelto boton-peligro">Sí, borrar</button>
+                <button type="button" id="btn-borrar-no" class="boton-suelto">Cancelar</button>
+            </div>
+        </div>
+    </aside>
+    <div id="album" class="album-modal" hidden role="dialog" aria-modal="true" aria-labelledby="titulo-album">
+        <div class="album-caja">
+            <div class="panel-cab"><h2 id="titulo-album">Álbum de leyes de los gases</h2><button type="button" class="boton-cerrar" data-cerrar="album" aria-label="Cerrar">✕</button></div>
+            <p class="nota">Cada sello se gana al comprobar la ley en la simulación: con lo demás igual, lleva un mando al doble o a la mitad y espera a que el gas se asiente.</p>
+            <div id="album-tabla" class="album-tabla"></div>
+        </div>
+    </div>
+
+    <script src="js/escena-comun.js"></script>
     <script src="js/parametros.js"></script>
-    <script src="js/estilo.js"></script>
-    <script src="js/sketch.js"></script>
+    <script src="js/fisica.js"></script>
+    <script src="js/retos.js"></script>
+    <script src="js/escena.js"></script>
 </body>
 </html>
