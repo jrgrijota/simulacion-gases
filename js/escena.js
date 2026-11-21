@@ -210,6 +210,10 @@ function mensaje() {
         }[c.ley];
         return { tag: i18n.t(LEYES[c.ley].nombre), col: COLS.cambio, txt: i18n.t(txt) };
     }
+    if (N === 0) return { tag: i18n.t('VACÍO'), col: COLS.cambio, txt: G.modo === 'globo'
+        ? i18n.t('Dentro no queda ninguna molécula: nada empuja la goma desde dentro y el aire de fuera aplasta el globo. Dentro hay vacío.')
+        : i18n.t('Dentro no queda ninguna molécula: nadie choca contra las paredes y la presión es cero. Dentro hay vacío.') };
+    if (G.T === 0 && G.modo === 'globo') return { tag: i18n.t('CERO ABSOLUTO'), col: COLS.cambio, txt: i18n.t('A 0 K las moléculas se quedan quietas: no empujan la goma y el aire de fuera aplasta el globo contra ellas. Un gas real se habría vuelto líquido mucho antes.') };
     if (G.T === 0) return { tag: i18n.t('CERO ABSOLUTO'), col: COLS.cambio, txt: i18n.t('A 0 K las moléculas se quedan quietas: no chocan y la presión es cero. Un gas real se habría vuelto líquido mucho antes.') };
     if (G.T < 80) return { tag: i18n.t('MUY FRÍO'), col: COLS.frio, txt: i18n.t('A {t} un gas real ya se habría vuelto líquido. Este modelo es de un gas ideal: sus moléculas no se atraen y siguen siendo gas.', { t: tempTxt(G.T) }) };
     if (alLimite())
@@ -356,7 +360,7 @@ function pastillaCambio() {
 
 // Globo: tamaño ∝ raíz cúbica del volumen (es un globo de verdad)
 function geomGlobo() {
-    const cx = 186, neck = 244, R0 = 58 * Math.cbrt(Math.max(0.05, volSuave || 1.2) / 1.2);
+    const cx = 186, neck = 244, R0 = 58 * Math.cbrt(Math.max(0.002, volSuave || 1.2) / 1.2);
     // Por encima de unos 2,3 L crece más despacio, para no tapar los rótulos ni la lectura
     const R = R0 > 72 ? 72 + (R0 - 72) * 0.45 : R0;
     return { cx, neck, R, w: R, h: R * 1.08, cy: neck - R * 1.02 - 14 };
