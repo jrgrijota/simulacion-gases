@@ -1,0 +1,109 @@
+/* ════════════════════════════════════════════════════
+   ESCENA PROPIA DE «CINÉTICA DE GASES»
+   Lo común (cabecera, carril, botones, paneles, retos, mandos sobre el
+   lienzo, móvil) está en css/escena-comun.css, que se carga antes.
+════════════════════════════════════════════════════ */
+
+/* Lo que solo se ve con un recipiente */
+body.modo-globo .only-rigido { display: none !important; }
+body.modo-rigido .only-globo { display: none !important; }
+
+/* Puntos de color de los recipientes */
+.recipientes [data-modo="globo"] .punto { background: #e8435a; }
+.recipientes [data-modo="rigido"] .punto { background: #d8efff; }
+
+/* La cabecera no tiene carril de modos: dos columnas */
+.barra-sup { grid-template-columns: 1fr auto; }
+
+/* ── Mandos del gas, bajo el recipiente ─────────────── */
+.mandos-gas { gap: 0; }
+.mandos-gas .fila-slider { align-items: center; gap: calc(var(--u) * 10); height: calc(var(--u) * 24); }
+.mandos-gas .fila-slider label { margin-right: auto; }
+.mandos-gas .fila-slider + input[type="range"] { margin: calc(var(--u) * 8) 0 calc(var(--u) * 3); }
+.mandos-gas .slider-bounds { margin-bottom: calc(var(--u) * 4); line-height: 1.15; }
+.mandos-gas .valor-slider { display: inline-flex; align-items: baseline; gap: calc(var(--u) * 4); }
+.mandos-gas .nota-mando { margin-top: calc(var(--u) * 2); }
+
+/* Valor que se puede escribir: parece texto hasta que se toca */
+.num-valor {
+    width: calc(var(--u) * 58);
+    padding: 0 calc(var(--u) * 2);
+    border: 0;
+    border-bottom: 2px dashed transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--title);
+    font: inherit;
+    text-align: right;
+}
+.num-valor:hover { border-bottom-color: var(--line); }
+.num-valor:focus { outline: none; border-bottom-color: var(--accent); background: var(--hundido); }
+#num-mol { width: calc(var(--u) * 48); }
+
+/* Carril pequeño K · °C, junto al nombre */
+.carril.mini {
+    height: calc(var(--u) * 26);
+    padding: calc(var(--u) * 2);
+    gap: 0;
+}
+.carril.mini .carril-btn {
+    height: 100%;
+    padding: 0 calc(var(--u) * 11);
+    font-size: calc(var(--u) * 13);
+}
+
+/* ── Globo explotado: mandos apagados y botón para inflar otro ── */
+body.estallado .mandos-gas { opacity: .45; pointer-events: none; }
+.boton-globo-nuevo {
+    position: absolute;
+    height: calc(var(--u) * 48);
+    font-size: calc(var(--u) * 18);
+    justify-content: center;
+    border-width: 3px;
+    border-color: var(--accent);
+    box-shadow: 0 4px 0 var(--boton-sombra, #071a2b);
+}
+.boton-globo-nuevo[hidden] { display: none; }
+
+/* ── Carril de ejes, sobre la tira de papel ─────────── */
+.mandos-grafica .carril.ejes {
+    display: flex;
+    width: 100%;
+    height: calc(var(--u) * 36);
+    padding: calc(var(--u) * 4);
+    background: #c4d9ea;
+    border-color: #3d5568;
+    border-width: 1.5px;
+}
+.mandos-grafica .carril.ejes .carril-btn {
+    flex: 1;
+    justify-content: center;
+    height: 100%;
+    padding: 0;
+    font-size: calc(var(--u) * 15);
+    color: #3d5568;
+}
+.mandos-grafica .carril.ejes .carril-btn[aria-checked="true"] { color: #071a2b; }
+body.theme-contrast .mandos-grafica .carril.ejes { background: #000; border-color: #fff; }
+body.theme-contrast .mandos-grafica .carril.ejes .carril-btn { color: #fff; }
+body.theme-contrast .mandos-grafica .carril.ejes .carril-btn[aria-checked="true"] { color: #000; }
+
+/* ── Ajustes (⚙): tamaño de las moléculas ───────────── */
+.theme-panel .fila-ajuste { display: flex; justify-content: space-between; align-items: baseline; font-size: .88rem; color: var(--text); margin-top: 4px; }
+.theme-panel .fila-ajuste .valor { font-weight: 700; color: var(--title); }
+.theme-panel #sl-tam { margin: 6px 0 4px; }
+
+/* ── Álbum de leyes: cinco sellos ───────────────────── */
+.album-mini.album-leyes { grid-template-columns: repeat(5, 1fr); }
+.album-leyes .sello { font-size: .78rem; }
+.album-mini .nombre-sello { display: block; text-align: center; font-size: .78rem; color: var(--muted); margin-top: 4px; }
+.album-mini .celda-sello { display: flex; flex-direction: column; align-items: center; }
+.album-tabla .leyes-fila { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.album-tabla .ley-celda { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.album-tabla .ley-celda strong { color: var(--title); font: 600 1rem var(--font-fun); }
+.album-tabla .ley-celda small { color: var(--muted); }
+
+@media (max-width: 760px) {
+    #btn-pausa, #btn-reiniciar { order: 3; flex: 1; justify-content: center; }
+    .album-tabla .leyes-fila { grid-template-columns: repeat(3, 1fr); }
+}
