@@ -26,7 +26,7 @@
 // Presión = impulso de los choques por segundo · K_PRESION / perímetro.
 const K_PRESION = 4;              // calibra la escala en atm
 const RADIO_MAX_GLOBO = 235;
-const K_TOPE = 0.08, K_REDONDEZ = 0.03, K_ESTRUCTURA = 0.15, AMORTIGUACION = 0.86;
+const K_TOPE = 0.04, K_REDONDEZ = 0.03, K_ESTRUCTURA = 0.15, AMORTIGUACION = 0.86;
 const NUM_NODOS = 60;
 const RADIO_REPOSO = 90;          // radio inicial del globo
 const LITROS_POR_PX2 = 5.0 / (Math.PI * 220 * 220);   // V ∝ área: 5 L con 220 px de radio

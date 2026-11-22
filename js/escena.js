@@ -248,16 +248,16 @@ function mensaje() {
     if (G.T === 0) return { tag: i18n.t('CERO ABSOLUTO'), col: COLS.cambio, txt: i18n.t('A 0 K las moléculas se quedan quietas: no chocan y la presión es cero. Un gas real se habría vuelto líquido mucho antes.') };
     if (G.T < 80) return { tag: i18n.t('MUY FRÍO'), col: COLS.frio, txt: i18n.t('A {t} un gas real ya se habría vuelto líquido. Este modelo es de un gas ideal: sus moléculas no se atraen y siguen siendo gas.', { t: tempTxt(G.T) }) };
     if (gomaTirante() && !alLimite())
-        return { tag: i18n.t('GOMA ESTIRADA'), col: COLS.gas, txt: i18n.t('La goma ya no puede estirarse más: ahora es ella la que sujeta el gas, y dentro hay más presión que fuera. Aguanta hasta {p} atm.', { p: P_ROTURA }) };
+        return { tag: i18n.t('LA GOMA TIRA'), col: COLS.gas, txt: i18n.t('La goma, muy estirada, tira hacia dentro (flechas). Contra el gas empujan el aire y la goma: por eso dentro hay más presión que fuera.') };
     if (alLimite())
-        return { tag: i18n.t('AL LÍMITE'), col: COLS.cambio, txt: i18n.t('La goma ya no puede estirarse más y la presión dentro sube. Aguanta hasta {p} atm: si sigue subiendo, el globo explotará.', { p: P_ROTURA }) };
+        return { tag: i18n.t('AL LÍMITE'), col: COLS.cambio, txt: i18n.t('La goma tira con mucha fuerza hacia dentro y está a punto de romperse. Aguanta hasta {p} atm dentro: si la presión sigue subiendo, el globo explotará.', { p: P_ROTURA }) };
     if (G.modo === 'globo') {
         const t = tendenciaMostrada('V');
         if (t > 0) return { tag: i18n.t('SE INFLA'), col: COLS.gas, txt: i18n.t('Dentro, las moléculas empujan más que el aire de fuera: la goma cede y el globo crece hasta que los dos empujes se igualan.') };
         if (t < 0) return { tag: i18n.t('SE DESINFLA'), col: COLS.gas, txt: i18n.t('Ahora el aire de fuera empuja más que las moléculas de dentro: el globo encoge hasta que los dos empujes se igualan.') };
         return { tag: i18n.t('EQUILIBRIO'), col: COLS.gas, txt: N === 1
-            ? i18n.t('La molécula choca sin parar contra la goma. Fuera, el aire empuja igual (1 atm): por eso el globo ni crece ni encoge. Con tan pocas moléculas la goma tiembla; en un globo real hay miles de trillones y no se nota.')
-            : i18n.t('Las <strong>{n} moléculas</strong> chocan sin parar contra la goma. Fuera, el aire empuja igual (1 atm): por eso el globo ni crece ni encoge. Con tan pocas moléculas la goma tiembla; en un globo real hay miles de trillones y no se nota.', { n: N }) };
+            ? i18n.t('La molécula choca sin parar contra la goma. Fuera, el aire empuja igual (1 atm): por eso el globo ni crece ni encoge. Con tan pocas moléculas la goma tiembla; en un globo real no se nota.')
+            : i18n.t('Las <strong>{n} moléculas</strong> chocan sin parar contra la goma. Fuera, el aire empuja igual (1 atm): por eso el globo ni crece ni encoge. Con tan pocas moléculas la goma tiembla; en un globo real no se nota.', { n: N }) };
     }
     const t = tendenciaMostrada('P');
     if (t > 0) return { tag: i18n.t('SUBE LA PRESIÓN'), col: COLS.gas, txt: i18n.t('Las moléculas chocan más veces (o más fuerte) contra las paredes y el émbolo: la presión sube.') };
@@ -266,6 +266,25 @@ function mensaje() {
 }
 
 // ═════════════════════════ DIBUJO ═════════════════════════════════
+// La goma estirada tira hacia dentro: flechas sobre la goma, más largas
+// cuanto mayor es la diferencia de presión que sostiene
+function flechasGoma(X, Y, k) {
+    const f = constrain((G.presion - 1) / (P_ROTURA - 1), 0.15, 1);
+    const largo = (14 + 22 * f) / k, n = 8;
+    for (let q = 0; q < n; q++) {
+        const a = (q + 0.5) / n * TWO_PI, i = Math.floor(a / TWO_PI * G.nodos.length) % G.nodos.length;
+        const r = Math.hypot(G.nodos[i].x, G.nodos[i].y), ux = cos(a), uy = sin(a);
+        const x0 = X(ux * (r + 4 / k)), y0 = Y(uy * (r + 4 / k));
+        const x1 = X(ux * (r - largo)), y1 = Y(uy * (r - largo));
+        for (const [col, w] of [[tinta(), 7], [COL.latex, 3.5]]) {
+            stroke(col); strokeWeight(w); strokeCap(ROUND); line(x0, y0, x1, y1);
+            const px = -uy, py = ux, h = 9;
+            line(x1, y1, x1 + ux * h + px * h * 0.7, y1 + uy * h + py * h * 0.7);
+            line(x1, y1, x1 + ux * h - px * h * 0.7, y1 + uy * h - py * h * 0.7);
+        }
+    }
+}
+
 function drawEscena() {
     for (const t of TARJETAS) tarjeta(t);
     const p = puntoObjeto();
@@ -668,6 +687,7 @@ function drawModelo() {
             noFill(); strokeJoin(ROUND);
             stroke(tinta()); strokeWeight(ESC_MOVIL ? 6 : 7); caminoMembrana();
             stroke(COL.latex); strokeWeight(ESC_MOVIL ? 3 : 3.5); caminoMembrana();
+            if (gomaTirante()) flechasGoma(X, Y, k);
         }
     } else {
         const x0 = X(-RECT_W / 2), x1 = X(RECT_W / 2), bot = Y(RECT_FONDO), top = Y(RECT_FONDO - G.H);
