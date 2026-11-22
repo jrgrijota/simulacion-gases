@@ -247,6 +247,8 @@ function mensaje() {
     if (G.T === 0 && G.modo === 'globo') return { tag: i18n.t('CERO ABSOLUTO'), col: COLS.cambio, txt: i18n.t('A 0 K las moléculas se quedan quietas: no empujan la goma y el aire de fuera aplasta el globo contra ellas. Un gas real se habría vuelto líquido mucho antes.') };
     if (G.T === 0) return { tag: i18n.t('CERO ABSOLUTO'), col: COLS.cambio, txt: i18n.t('A 0 K las moléculas se quedan quietas: no chocan y la presión es cero. Un gas real se habría vuelto líquido mucho antes.') };
     if (G.T < 80) return { tag: i18n.t('MUY FRÍO'), col: COLS.frio, txt: i18n.t('A {t} un gas real ya se habría vuelto líquido. Este modelo es de un gas ideal: sus moléculas no se atraen y siguen siendo gas.', { t: tempTxt(G.T) }) };
+    if (gomaTirante() && !alLimite())
+        return { tag: i18n.t('GOMA ESTIRADA'), col: COLS.gas, txt: i18n.t('La goma ya no puede estirarse más: ahora es ella la que sujeta el gas, y dentro hay más presión que fuera. Aguanta hasta {p} atm.', { p: P_ROTURA }) };
     if (alLimite())
         return { tag: i18n.t('AL LÍMITE'), col: COLS.cambio, txt: i18n.t('La goma ya no puede estirarse más y la presión dentro sube. Aguanta hasta {p} atm: si sigue subiendo, el globo explotará.', { p: P_ROTURA }) };
     if (G.modo === 'globo') {
@@ -401,10 +403,28 @@ function geomGlobo() {
 // se pasa de P_ROTURA durante 4 s seguidos, la goma se rompe.
 const P_ROTURA = 3;             // atm que aguanta la goma
 let ESTALLIDO = null, tSobrePresion = null;
-function alLimite() { return G.modo === 'globo' && G.radioMedio > RADIO_MAX_GLOBO - 10 && G.presion > 1.15; }
+// Goma estirada del todo: ya no crece y es la goma la que sujeta el gas
+// (con margen para entrar y salir, para que no parpadee con el temblor)
+let gomaEstirada = false;
+function gomaTirante() {
+    if (G.modo !== 'globo') gomaEstirada = false;
+    else if (G.radioMedio > RADIO_MAX_GLOBO - 10 && G.presion > 1.2) gomaEstirada = true;
+    else if (G.radioMedio < RADIO_MAX_GLOBO - 20 || G.presion < 1.08) gomaEstirada = false;
+    return gomaEstirada;
+}
+// «AL LÍMITE» solo cerca de reventar
+// (con margen: una vez avisado, sigue hasta bajar de 2,65, para que no parpadee)
+const P_AVISO = 2.8;
+let avisoLimite = false;
+function alLimite() {
+    if (!gomaTirante()) avisoLimite = false;
+    else if (G.presion > P_AVISO) avisoLimite = true;
+    else if (G.presion < P_AVISO - 0.15) avisoLimite = false;
+    return avisoLimite;
+}
 function vigilarRotura() {
     if (ESTALLIDO || G.pausa) return;
-    if (alLimite() && G.presion > P_ROTURA) {
+    if (gomaTirante() && G.presion > P_ROTURA) {
         if (tSobrePresion == null) tSobrePresion = relojSim();
         // 4 s seguidos: más que la media de 3 s de la presión, para que un cambio brusco
         // de los mandos (el globo aún creciendo) no lo rompa antes de tiempo
