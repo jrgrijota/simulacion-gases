@@ -128,6 +128,10 @@ const tempTxt = (T) => unidadC ? `${T - 273} °C` : `${T} K`;
 // vuelve al equilibrio, se comprueba la ley y se celebra (sin interrumpir).
 let tCambio = -1e9, fotoEstable = null, REF = null, CELEB = null, tCero = null;
 const ESPERA = 4500;            // ms sin tocar nada para dar el gas por estable (la presión es media de 3 s)
+// El volumen del globo tiembla (pocas moléculas): para las leyes se usa una
+// media más larga (~3 s) y se espera algo más
+const ESPERA_GLOBO = 7000;
+let volLey = null;
 
 // Reloj de la simulación en ms (por pasos): la espera no depende de los fps
 function relojSim() { return G.pasos * 1000 / 60; }
@@ -137,16 +141,17 @@ function notificarCambio(variable) {
     const mismoGrupo = REF && REF.var === variable && REF.modo === c.modo &&
         (variable === 'T' || REF.T === c.T) && (variable === 'N' || REF.N === c.N) && (variable === 'V' || REF.Vr === c.Vr);
     if (!mismoGrupo) REF = fotoEstable && fotoEstable.modo === c.modo ? Object.assign({}, fotoEstable, { var: variable, hecho: false }) : null;
-    tCambio = relojSim();
+    tCambio = relojSim(); tMando = tCambio;
+    tendencia = [];             // lo de antes de mover el mando no cuenta
 }
 function cerca(x, objetivo, tol) { return Math.abs(x / objetivo - 1) <= tol; }
 
 function comprobarLeyes() {
     const ahora = relojSim();
     if (G.pausa) return;
-    if (ahora - tCambio < ESPERA) return;
+    if (ahora - tCambio < (G.modo === 'globo' ? ESPERA_GLOBO : ESPERA)) return;
     const c = controles();
-    fotoEstable = Object.assign(c, { P: G.presion, V: volSuave, t: ahora });
+    fotoEstable = Object.assign(c, { P: G.presion, V: volLey, t: ahora });
 
     // Cero absoluto
     if (G.T === 0) {
@@ -160,7 +165,7 @@ function comprobarLeyes() {
     const ratio = { T: REF.T > 0 ? c.T / REF.T : 0, N: c.N / REF.N, V: c.Vr / REF.Vr }[REF.var];
     const x = cerca(ratio, 2, 0.03) ? 2 : cerca(ratio, 0.5, 0.03) ? 0.5 : 0;
     if (!x || !(REF.P > 0.02)) return;
-    const rP = G.presion / REF.P, rV = volSuave / REF.V;
+    const rP = G.presion / REF.P, rV = volLey / REF.V;
     let ley = null;
     if (REF.var === 'V' && c.modo === 'rigido' && cerca(rP * x, 1, 0.12)) ley = 'boyle';
     if (REF.var === 'T' && c.modo === 'globo' && cerca(rV, x, 0.10)) ley = 'charles';
@@ -183,12 +188,38 @@ const LEYES = {
 };
 
 // ── Mensaje del panel de estado ──────────────────────────────────
+// Con pocas moléculas el globo tiembla solo (los choques no son regulares).
+// Para no confundir ese temblor con «se infla / se desinfla»:
+//  · solo se mira si sube o baja después de mover un mando (12 s como mucho);
+//  · tiene que cambiar más de un 4 % en 2 s;
+//  · en cuanto deja de cambiar, queda en equilibrio hasta que se mueva otro mando;
+//  · un mensaje se queda al menos 2 s antes de cambiar a otro.
+const TENDENCIA_TRAS_CAMBIO = 12000, TENDENCIA_UMBRAL = 0.04, TENDENCIA_MINIMO = 2000;
+let tMando = -1e9;              // última vez que se movió un mando (no cuenta reiniciar)
+let tendMostrada = { clave: null, v: 0, t: -1e9, mando: -1e9, cambio: 0, quieto: false };
 function tendenciaDe(clave) {
     if (tendencia.length < 2) return 0;
     const a = tendencia[0][clave], b = tendencia[tendencia.length - 1][clave];
     if (!(a > 0.01)) return 0;
     const r = b / a - 1;
-    return r > 0.025 ? 1 : r < -0.025 ? -1 : 0;
+    return r > TENDENCIA_UMBRAL ? 1 : r < -TENDENCIA_UMBRAL ? -1 : 0;
+}
+function tendenciaMostrada(clave) {
+    const ahora = relojSim(), m = tendMostrada;
+    if (m.clave !== clave || m.mando !== tMando) Object.assign(m, { clave, mando: tMando, cambio: 0, quieto: false, t: -1e9 });
+    const desde = ahora - tMando;
+    let v = 0;
+    if (!m.quieto && desde < TENDENCIA_TRAS_CAMBIO) {
+        v = tendenciaDe(clave);
+        // Si iba en un sentido y ahora va en el otro, es el temblor de después
+        // de llegar: ya está en equilibrio
+        if (v && m.cambio && v !== m.cambio) { v = 0; m.quieto = true; }
+        else if (v) m.cambio = v;
+        // Ya ha llegado (o el mando no cambió nada que se note): equilibrio
+        else if (desde > 1500 && (m.cambio || desde > 4000)) m.quieto = true;
+    }
+    if (v !== m.v && ahora - m.t >= TENDENCIA_MINIMO) { m.v = v; m.t = ahora; }
+    return m.v;
 }
 function mensaje() {
     const COLS = { gas: THEME.gas, cambio: THEME.change, frio: THEME.cold, dim: THEME.textDim };
@@ -219,14 +250,14 @@ function mensaje() {
     if (alLimite())
         return { tag: i18n.t('AL LÍMITE'), col: COLS.cambio, txt: i18n.t('La goma ya no puede estirarse más y la presión dentro sube. Aguanta hasta {p} atm: si sigue subiendo, el globo explotará.', { p: P_ROTURA }) };
     if (G.modo === 'globo') {
-        const t = tendenciaDe('V');
+        const t = tendenciaMostrada('V');
         if (t > 0) return { tag: i18n.t('SE INFLA'), col: COLS.gas, txt: i18n.t('Dentro, las moléculas empujan más que el aire de fuera: la goma cede y el globo crece hasta que los dos empujes se igualan.') };
         if (t < 0) return { tag: i18n.t('SE DESINFLA'), col: COLS.gas, txt: i18n.t('Ahora el aire de fuera empuja más que las moléculas de dentro: el globo encoge hasta que los dos empujes se igualan.') };
         return { tag: i18n.t('EQUILIBRIO'), col: COLS.gas, txt: N === 1
-            ? i18n.t('La molécula choca sin parar contra la goma. Fuera, el aire empuja igual (1 atm): por eso el globo ni crece ni encoge.')
-            : i18n.t('Las <strong>{n} moléculas</strong> chocan sin parar contra la goma. Fuera, el aire empuja igual (1 atm): por eso el globo ni crece ni encoge.', { n: N }) };
+            ? i18n.t('La molécula choca sin parar contra la goma. Fuera, el aire empuja igual (1 atm): por eso el globo ni crece ni encoge. Con tan pocas moléculas la goma tiembla; en un globo real hay miles de trillones y no se nota.')
+            : i18n.t('Las <strong>{n} moléculas</strong> chocan sin parar contra la goma. Fuera, el aire empuja igual (1 atm): por eso el globo ni crece ni encoge. Con tan pocas moléculas la goma tiembla; en un globo real hay miles de trillones y no se nota.', { n: N }) };
     }
-    const t = tendenciaDe('P');
+    const t = tendenciaMostrada('P');
     if (t > 0) return { tag: i18n.t('SUBE LA PRESIÓN'), col: COLS.gas, txt: i18n.t('Las moléculas chocan más veces (o más fuerte) contra las paredes y el émbolo: la presión sube.') };
     if (t < 0) return { tag: i18n.t('BAJA LA PRESIÓN'), col: COLS.gas, txt: i18n.t('Las moléculas chocan menos veces (o más flojo) contra las paredes y el émbolo: la presión baja.') };
     return { tag: i18n.t('PRESIÓN ESTABLE'), col: COLS.gas, txt: i18n.t('Las <strong>{n} moléculas</strong> chocan sin parar contra las paredes y el émbolo. Esos choques son la presión del gas.', { n: N }) };
@@ -920,7 +951,7 @@ function elegirModo(m) {
     if (ESTALLIDO) reiniciar(G.T > 0 ? G.T : 273);
     if (m !== G.modo) {
         cambiarModo(m);
-        borrarGrafica(); REF = null; CELEB = null; tCambio = relojSim(); embolo = null; volSuave = G.area * LITROS_POR_PX2;
+        borrarGrafica(); REF = null; CELEB = null; tCambio = relojSim(); tMando = -1e9; tendencia = []; embolo = null; volSuave = volLey = G.area * LITROS_POR_PX2;
     }
     document.body.classList.toggle('modo-globo', m === 'globo');
     document.body.classList.toggle('modo-rigido', m === 'rigido');
@@ -933,8 +964,8 @@ function elegirModo(m) {
 function reiniciar(T = 273) {
     quitarEstallido();
     reiniciarFisica(T, 50);
-    volSuave = G.area * LITROS_POR_PX2; embolo = null;
-    borrarGrafica(); REF = null; CELEB = null; tCambio = relojSim();
+    volSuave = volLey = G.area * LITROS_POR_PX2; embolo = null;
+    borrarGrafica(); REF = null; CELEB = null; tCambio = relojSim(); tMando = -1e9; tendencia = [];
     if (G.pausa) alternarPausa();
     mostrarValores();
 }
@@ -1019,7 +1050,7 @@ function setup() {
     frameRate(60);
     if (document.fonts) document.fonts.load('600 12px Fredoka');
     iniciarFisica();
-    volSuave = G.area * LITROS_POR_PX2;
+    volSuave = volLey = G.area * LITROS_POR_PX2;
     iniciarSelectorTema();
     setupControles();
     elegirModo('globo');
@@ -1050,10 +1081,14 @@ function draw() {
     fuenteJuego();
     if (ESTALLIDO) pasoEstallido(); else { pasoFisica(); vigilarRotura(); }
     if (volSuave == null) volSuave = G.volumen;
-    if (!G.pausa) volSuave += (G.volumen - volSuave) * (MOV_REDUCIDO ? 1 : 0.05);
+    // Globo: media de ~1,5 s (el volumen tiembla con pocas moléculas). Émbolo: lo
+    // mueve el mando y no tiembla, así que sigue rápido.
+    if (!G.pausa) volSuave += (G.volumen - volSuave) * (G.modo === 'globo' ? 0.012 : MOV_REDUCIDO ? 1 : 0.05);
+    if (volLey == null) volLey = G.volumen;
+    if (!G.pausa) volLey += (G.volumen - volLey) * (G.modo === 'globo' ? 0.006 : 1);
     if (frameCount % 15 === 0 && !G.pausa && medidaLista()) {
         tendencia.push({ V: volSuave, P: G.presion, t: millis() });
-        while (tendencia.length && millis() - tendencia[0].t > 1600) tendencia.shift();
+        while (tendencia.length && millis() - tendencia[0].t > 2000) tendencia.shift();
     }
     if (!ESTALLIDO) { registrarGrafica(); comprobarLeyes(); }
     if (G.modo === 'rigido') yEmbolo();
