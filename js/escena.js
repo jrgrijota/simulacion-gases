@@ -888,18 +888,24 @@ function drawPanelEstado(m) {
 }
 
 // ── Gráfica en papel ─────────────────────────────────────────────
+// La plumilla marca UN punto por cada estado del gas: al empezar y después de
+// cada cambio espera a que el gas se estabilice (la presión es media de 3 s;
+// el globo además tarda en crecer o encoger) y luego marca la media de 3 s.
+const ESPERA_PUNTO = { rigido: 5000, globo: 7000 }, MEDIA_PUNTO = 3000;
+let tCambioGrafica = null, puntoHecho = false;
 function registrarGrafica() {
     if (G.pausa) return;
-    if (!medidaLista()) { tGrafica = millis(); return; }   // aún no hay ningún segundo de choques medido
+    if (tCambio !== tCambioGrafica) { tCambioGrafica = tCambio; puntoHecho = false; acumulado = { p: 0, v: 0, n: 0 }; }
+    if (puntoHecho || !medidaLista()) return;
+    const desde = relojSim() - tCambio, espera = ESPERA_PUNTO[G.modo];
+    if (desde < espera) return;
     acumulado.p += G.presion; acumulado.v += volSuave; acumulado.n++;
-    if (millis() - tGrafica < 3000) return;
-    if (acumulado.n) {
-        historial.push({ p: acumulado.p / acumulado.n, v: acumulado.v / acumulado.n, T: G.T, t: millis() });
-        if (historial.length > 35) historial.shift();
-    }
-    acumulado = { p: 0, v: 0, n: 0 }; tGrafica = millis();
+    if (desde < espera + MEDIA_PUNTO) return;
+    historial.push({ p: acumulado.p / acumulado.n, v: acumulado.v / acumulado.n, T: G.T, t: millis() });
+    if (historial.length > 35) historial.shift();
+    puntoHecho = true;
 }
-function borrarGrafica() { historial = []; acumulado = { p: 0, v: 0, n: 0 }; tGrafica = millis(); }
+function borrarGrafica() { historial = []; acumulado = { p: 0, v: 0, n: 0 }; tGrafica = millis(); tCambioGrafica = null; }
 
 function drawGrafica() {
     const g = GRAPH, mv = ESC_MOVIL;
@@ -907,7 +913,7 @@ function drawGrafica() {
     stroke(THEME.fun ? tinta() : THEME.border); strokeWeight(THEME.fun ? 3 : 1.5); fill(THEME.paper);
     rect(g.x + 1, g.y + 1, g.w - 5, g.h - 7, 16);
     const ink = THEME.paperInk, dim = THEME.fun ? '#3d5568' : THEME.paperInk;
-    if (!mv) { textoSis(i18n.t('Un punto cada 3 s'), g.x + 16, g.y + 72, 12.5, dim); textoSis(i18n.t('(media de los choques)'), g.x + 16, g.y + 90, 12.5, dim); }
+    if (!mv) { textoSis(i18n.t('Un punto cuando el gas'), g.x + 16, g.y + 72, 12.5, dim); textoSis(i18n.t('se estabiliza (media de 3 s)'), g.x + 16, g.y + 90, 12.5, dim); }
     const x0 = mv ? g.x + 48 : g.x + 272, x1 = g.x + g.w - (mv ? 18 : 80), y0 = mv ? g.y + 74 : g.y + 16, y1 = g.y + g.h - (mv ? 36 : 30);
     stroke(THEME.paperGrid); strokeWeight(1);
     for (let i = 0; i <= 10; i++) { const xx = x0 + (x1 - x0) * i / 10; line(xx, y0, xx, y1); }
