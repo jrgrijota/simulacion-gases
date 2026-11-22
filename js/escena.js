@@ -269,7 +269,8 @@ function mensaje() {
 // La goma estirada tira hacia dentro: flechas sobre la goma, más largas
 // cuanto mayor es la diferencia de presión que sostiene
 function flechasGoma(X, Y, k) {
-    // Discretas: finas, semitransparentes y por fuera de la goma (no tapan moléculas)
+    // Discretas (finas, semitransparentes) y nacen en la goma hacia dentro: es la
+    // propia goma la que tira hacia el centro
     const f = constrain((G.presion - 1) / (P_ROTURA - 1), 0.15, 1);
     const largo = (8 + 12 * f) / k, n = 6;
     const c = color(COL.latex); c.setAlpha(150);
@@ -277,8 +278,8 @@ function flechasGoma(X, Y, k) {
     for (let q = 0; q < n; q++) {
         const a = (q + 0.5) / n * TWO_PI, i = Math.floor(a / TWO_PI * G.nodos.length) % G.nodos.length;
         const r = Math.hypot(G.nodos[i].x, G.nodos[i].y), ux = cos(a), uy = sin(a);
-        const x0 = X(ux * (r + 6 / k + largo)), y0 = Y(uy * (r + 6 / k + largo));
-        const x1 = X(ux * (r + 6 / k)), y1 = Y(uy * (r + 6 / k));
+        const x0 = X(ux * (r - 4 / k)), y0 = Y(uy * (r - 4 / k));
+        const x1 = X(ux * (r - 4 / k - largo)), y1 = Y(uy * (r - 4 / k - largo));
         line(x0, y0, x1, y1);
         const px = -uy, py = ux, h = 5;
         line(x1, y1, x1 + ux * h + px * h * 0.7, y1 + uy * h + py * h * 0.7);
