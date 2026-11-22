@@ -341,15 +341,18 @@ function foco(x, y, rx, ry) {
     g.addColorStop(0, 'rgba(45,119,173,0.55)'); g.addColorStop(1, 'rgba(45,119,173,0)');
     ctx.save(); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
 }
-function textoSis(txt, x, y, fs, col, alin = LEFT, peso = NORMAL) {
-    textFont(FUENTE_TEXTO); textSize(fs); textStyle(peso); noStroke(); fill(col); textAlign(alin, BASELINE); text(txt, x, y);
+// anchoMax: si el texto (p. ej. traducido) no cabe, se reduce la letra
+function textoSis(txt, x, y, fs, col, alin = LEFT, peso = NORMAL, anchoMax = 0) {
+    textFont(FUENTE_TEXTO); textSize(fs); textStyle(peso);
+    if (anchoMax) { const w = textWidth(txt); if (w > anchoMax) textSize(fs * anchoMax / w); }
+    noStroke(); fill(col); textAlign(alin, BASELINE); text(txt, x, y);
     textStyle(NORMAL); fuenteJuego();
 }
 function base() {
     rectTinta(34, 292, 300, 44, 14, COL.metal1, 3.5);
     noStroke(); fill(COL.metal2); rect(34, 292, 300, 11, 5.5);
     stroke(tinta()); strokeWeight(2); fill(COL.piloto); circle(58, 319, 12);
-    textoSis(i18n.t('Termostato · mantiene {t}', { t: tempTxt(G.T) }), 186, 324, 14, THEME.rotuloTermo, CENTER);
+    textoSis(i18n.t('Termostato · mantiene {t}', { t: tempTxt(G.T) }), 192, 324, 14, THEME.rotuloTermo, CENTER, NORMAL, 236);
 }
 function manometro(mx, my, mr, P) {
     // Escala que cabe: 0–4, 0–20 o 0–100 atm
@@ -782,6 +785,7 @@ function dibujarMoleculas(X, Y, rD, k) {
     }
     ctx.restore();
 }
+let xFinColor = 0;
 function drawLeyenda(x, y, rD) {
     const fs = ESC_MOVIL ? 13 : 13.5, dim = THEME.textDim;
     const bola = (bx, by, c) => { stroke(tinta()); strokeWeight(1.6); fill(c); circle(bx, by, 12); };
@@ -796,16 +800,20 @@ function drawLeyenda(x, y, rD) {
     }
     const y2 = y + 24;
     if (opciones.color) {
+        // Posiciones según lo que ocupa cada palabra (las traducciones miden distinto)
+        textFont(FUENTE_TEXTO); textSize(fs);
+        const wColor = textWidth(i18n.t('color:')), wLenta = textWidth(i18n.t('lenta'));
         textoSis(i18n.t('color:'), x, y2, fs, dim);
-        textoSis(i18n.t('lenta'), x + 48, y2, fs, dim);
-        const gx = x + 90, ctx = drawingContext, g = ctx.createLinearGradient(gx, 0, gx + 70, 0);
+        textoSis(i18n.t('lenta'), x + wColor + 8, y2, fs, dim);
+        const gx = x + wColor + wLenta + 16, ctx = drawingContext, g = ctx.createLinearGradient(gx, 0, gx + 70, 0);
         g.addColorStop(0, colorRapidez(0).toString()); g.addColorStop(1, colorRapidez(6).toString());
         stroke(tinta()); strokeWeight(1.5); fill(COL.lenta);
         ctx.save(); ctx.fillStyle = g; rect(gx, y2 - 11, 70, 12, 6); ctx.restore();
-        textoSis(i18n.t('rápida'), x + 166, y2, fs, dim);
+        textoSis(i18n.t('rápida'), gx + 76, y2, fs, dim);
+        textFont(FUENTE_TEXTO); textSize(fs); xFinColor = gx + 76 + textWidth(i18n.t('rápida'));
     }
     if (G.modo === 'globo') {
-        const xc = opciones.color ? x + 238 : x;
+        const xc = opciones.color ? Math.max(x + 238, xFinColor + 18) : x;
         stroke(THEME.choque); strokeWeight(3.5); strokeCap(ROUND); line(xc, y2 - 12, xc, y2 + 2);
         textoSis(i18n.t('choque'), xc + 12, y2, fs, THEME.text);
     }
@@ -913,7 +921,7 @@ function drawGrafica() {
     stroke(THEME.fun ? tinta() : THEME.border); strokeWeight(THEME.fun ? 3 : 1.5); fill(THEME.paper);
     rect(g.x + 1, g.y + 1, g.w - 5, g.h - 7, 16);
     const ink = THEME.paperInk, dim = THEME.fun ? '#3d5568' : THEME.paperInk;
-    if (!mv) { textoSis(i18n.t('Un punto cuando el gas'), g.x + 16, g.y + 72, 12.5, dim); textoSis(i18n.t('se estabiliza (media de 3 s)'), g.x + 16, g.y + 90, 12.5, dim); }
+    if (!mv) { textoSis(i18n.t('Un punto cuando el gas'), g.x + 16, g.y + 72, 12.5, dim, LEFT, NORMAL, 236); textoSis(i18n.t('se estabiliza (media de 3 s)'), g.x + 16, g.y + 90, 12.5, dim, LEFT, NORMAL, 236); }
     const x0 = mv ? g.x + 48 : g.x + 272, x1 = g.x + g.w - (mv ? 18 : 80), y0 = mv ? g.y + 74 : g.y + 16, y1 = g.y + g.h - (mv ? 36 : 30);
     stroke(THEME.paperGrid); strokeWeight(1);
     for (let i = 0; i <= 10; i++) { const xx = x0 + (x1 - x0) * i / 10; line(xx, y0, xx, y1); }
