@@ -269,19 +269,20 @@ function mensaje() {
 // La goma estirada tira hacia dentro: flechas sobre la goma, más largas
 // cuanto mayor es la diferencia de presión que sostiene
 function flechasGoma(X, Y, k) {
+    // Discretas: finas, semitransparentes y por fuera de la goma (no tapan moléculas)
     const f = constrain((G.presion - 1) / (P_ROTURA - 1), 0.15, 1);
-    const largo = (14 + 22 * f) / k, n = 8;
+    const largo = (8 + 12 * f) / k, n = 6;
+    const c = color(COL.latex); c.setAlpha(150);
+    stroke(c); strokeWeight(2); strokeCap(ROUND);
     for (let q = 0; q < n; q++) {
         const a = (q + 0.5) / n * TWO_PI, i = Math.floor(a / TWO_PI * G.nodos.length) % G.nodos.length;
         const r = Math.hypot(G.nodos[i].x, G.nodos[i].y), ux = cos(a), uy = sin(a);
-        const x0 = X(ux * (r + 4 / k)), y0 = Y(uy * (r + 4 / k));
-        const x1 = X(ux * (r - largo)), y1 = Y(uy * (r - largo));
-        for (const [col, w] of [[tinta(), 7], [COL.latex, 3.5]]) {
-            stroke(col); strokeWeight(w); strokeCap(ROUND); line(x0, y0, x1, y1);
-            const px = -uy, py = ux, h = 9;
-            line(x1, y1, x1 + ux * h + px * h * 0.7, y1 + uy * h + py * h * 0.7);
-            line(x1, y1, x1 + ux * h - px * h * 0.7, y1 + uy * h - py * h * 0.7);
-        }
+        const x0 = X(ux * (r + 6 / k + largo)), y0 = Y(uy * (r + 6 / k + largo));
+        const x1 = X(ux * (r + 6 / k)), y1 = Y(uy * (r + 6 / k));
+        line(x0, y0, x1, y1);
+        const px = -uy, py = ux, h = 5;
+        line(x1, y1, x1 + ux * h + px * h * 0.7, y1 + uy * h + py * h * 0.7);
+        line(x1, y1, x1 + ux * h - px * h * 0.7, y1 + uy * h - py * h * 0.7);
     }
 }
 
@@ -814,7 +815,7 @@ function relacion(a, b) {
     if (!(b > 0) || !(a >= 0)) return '';
     const r = a / b;
     if (cerca(r, 2, 0.12)) return '× 2';
-    if (cerca(r, 0.5, 0.12)) return '÷ 2';
+    if (cerca(r, 0.5, 0.12)) return '/ 2';
     if (cerca(r, 1, 0.04)) return i18n.t('igual');
     return '';
 }
@@ -876,8 +877,8 @@ function drawPanelEstado(m) {
     textoRico(partirRico(trozosRicos(i18n.t('Choques contra la pared: <strong>{c}</strong> cada segundo', { c: G.choquesSeg })), w - 2 * pad), x + pad, yy + 12, fsD + 6);
     const V = volSuave, P = G.presion, T = G.T;
     const ley = G.modo === 'globo'
-        ? i18n.t('V ÷ T = <strong>{a} L/K</strong> (a 1 atm)', { a: T > 0 ? fmt(V / T, 4) : '—' })
-        : i18n.t('P × V = <strong>{a} atm·L</strong> · P ÷ T = <strong>{b}</strong>', { a: fmt(P * V, 2), b: T > 0 ? fmt(P / T, 4) : '—' });
+        ? i18n.t('V / T = <strong>{a} L/K</strong> (a 1 atm)', { a: T > 0 ? fmt(V / T, 4) : '—' })
+        : i18n.t('P × V = <strong>{a} atm·L</strong> · P / T = <strong>{b}</strong>', { a: fmt(P * V, 2), b: T > 0 ? fmt(P / T, 4) : '—' });
     fill(cel && CELEB.ley === 'boyle' ? THEME.change : THEME.text);
     textoRico(partirRico(trozosRicos(ley), w - 2 * pad), x + pad, yy + 38, fsD + 6);
     fill(THEME.textDim); textSize(compacto ? 13 : 14);
