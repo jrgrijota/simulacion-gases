@@ -399,7 +399,7 @@ function geomGlobo() {
 // ── El globo explota ─────────────────────────────────────────────
 // Primero «AL LÍMITE»: la goma no da más de sí y la presión sube. Si dentro
 // se pasa de P_ROTURA durante 4 s seguidos, la goma se rompe.
-const P_ROTURA = 2;             // atm que aguanta la goma
+const P_ROTURA = 3;             // atm que aguanta la goma
 let ESTALLIDO = null, tSobrePresion = null;
 function alLimite() { return G.modo === 'globo' && G.radioMedio > RADIO_MAX_GLOBO - 10 && G.presion > 1.15; }
 function vigilarRotura() {
