@@ -9,7 +9,7 @@
 //   · columna 3: el panel de estado;
 //   · abajo: la gráfica en papel (P–V, V–T o P–T).
 //  El objeto se dibuja en las coordenadas del boceto aprobado
-//  (/capturas/escena-gases/boceto.html, 400 × 340) y se coloca con OBJ.
+//  (/capturas/escena-gases/boceto.html, 400 · 340) y se coloca con OBJ.
 //  La física está en js/fisica.js; los retos y el álbum en js/retos.js.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -815,7 +815,7 @@ function drawLeyenda(x, y, rD) {
 function relacion(a, b) {
     if (!(b > 0) || !(a >= 0)) return '';
     const r = a / b;
-    if (cerca(r, 2, 0.12)) return '× 2';
+    if (cerca(r, 2, 0.12)) return '· 2';
     if (cerca(r, 0.5, 0.12)) return '/ 2';
     if (cerca(r, 1, 0.04)) return i18n.t('igual');
     return '';
@@ -879,7 +879,7 @@ function drawPanelEstado(m) {
     const V = volSuave, P = G.presion, T = G.T;
     const ley = G.modo === 'globo'
         ? i18n.t('V / T = <strong>{a} L/K</strong> (a 1 atm)', { a: T > 0 ? fmt(V / T, 4) : '—' })
-        : i18n.t('P × V = <strong>{a} atm·L</strong> · P / T = <strong>{b}</strong>', { a: fmt(P * V, 2), b: T > 0 ? fmt(P / T, 4) : '—' });
+        : i18n.t('P · V = <strong>{a} atm·L</strong> · P / T = <strong>{b}</strong>', { a: fmt(P * V, 2), b: T > 0 ? fmt(P / T, 4) : '—' });
     fill(cel && CELEB.ley === 'boyle' ? THEME.change : THEME.text);
     textoRico(partirRico(trozosRicos(ley), w - 2 * pad), x + pad, yy + 38, fsD + 6);
     fill(THEME.textDim); textSize(compacto ? 13 : 14);
