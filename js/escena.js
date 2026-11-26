@@ -123,24 +123,29 @@ const fmt = (x, d) => i18n.num(x, d);
 const tempTxt = (T) => unidadC ? `${T - 273} °C` : `${T} K`;
 
 // ── Momento clave: las leyes de los gases ────────────────────────
-// Se toma una «foto» del gas en equilibrio justo antes de mover un mando.
-// Cuando, con lo demás igual, ese mando llega al doble o a la mitad y el gas
-// vuelve al equilibrio, se comprueba la ley y se celebra (sin interrumpir).
-let tCambio = -1e9, fotoEstable = null, REF = null, CELEB = null, tCero = null;
+// Cada vez que el gas queda estable se guarda una «foto» (presión y volumen
+// medios mientras está estable). Al llegar a otro estado estable se compara
+// con todas las fotos del mismo recipiente: si solo ha cambiado un mando y ha
+// llegado al doble o a la mitad (aunque se haya pasado por valores
+// intermedios), se comprueba la ley y se celebra (sin interrumpir).
+// Así 200 K → 400 K cuenta aunque se haya empezado en 273 K.
+let tCambio = -1e9, CELEB = null, tCero = null;
+let fotos = [];                 // estados estables del recipiente actual
+let celebradoEn = null;         // mandos con los que ya se celebró (no repetir)
 const ESPERA = 4500;            // ms sin tocar nada para dar el gas por estable (la presión es media de 3 s)
 // El volumen del globo tiembla (pocas moléculas): para las leyes se usa una
 // media más larga (~3 s) y se espera algo más
 const ESPERA_GLOBO = 7000;
 let volLey = null;
+// Márgenes: el mando, un 5 % del doble o la mitad; lo medido, un 18 %
+const TOL_MANDO = 0.05, TOL_MEDIDA = 0.18;
 
 // Reloj de la simulación en ms (por pasos): la espera no depende de los fps
 function relojSim() { return G.pasos * 1000 / 60; }
 function controles() { return { modo: G.modo, T: G.T, N: G.N, Vr: Math.round(G.volRigido * 100) }; }
-function notificarCambio(variable) {
-    const c = controles();
-    const mismoGrupo = REF && REF.var === variable && REF.modo === c.modo &&
-        (variable === 'T' || REF.T === c.T) && (variable === 'N' || REF.N === c.N) && (variable === 'V' || REF.Vr === c.Vr);
-    if (!mismoGrupo) REF = fotoEstable && fotoEstable.modo === c.modo ? Object.assign({}, fotoEstable, { var: variable, hecho: false }) : null;
+const claveDe = (c) => `${c.modo}|${c.T}|${c.N}|${c.Vr}`;
+function olvidarFotos() { fotos = []; celebradoEn = null; }
+function notificarCambio() {
     tCambio = relojSim(); tMando = tCambio;
     tendencia = [];             // lo de antes de mover el mando no cuenta
 }
@@ -150,8 +155,14 @@ function comprobarLeyes() {
     const ahora = relojSim();
     if (G.pausa) return;
     if (ahora - tCambio < (G.modo === 'globo' ? ESPERA_GLOBO : ESPERA)) return;
-    const c = controles();
-    fotoEstable = Object.assign(c, { P: G.presion, V: volLey, t: ahora });
+    const c = controles(), clave = claveDe(c);
+
+    // Foto del estado actual: media de lo medido mientras sigue estable
+    let foto = fotos.find(f => f.clave === clave);
+    if (!foto) { foto = Object.assign(c, { clave, P: 0, V: 0, n: 0, t: ahora }); fotos.push(foto); if (fotos.length > 40) fotos.shift(); }
+    else if (foto.tCambio !== tCambio) { foto.P = foto.V = foto.n = 0; foto.t = ahora; }
+    foto.tCambio = tCambio;
+    foto.n++; foto.P += (G.presion - foto.P) / foto.n; foto.V += (volLey - foto.V) / foto.n;
 
     // Cero absoluto
     if (G.T === 0) {
@@ -159,19 +170,24 @@ function comprobarLeyes() {
         if (ahora - tCero > 1500 && !(CELEB && CELEB.ley === 'cero')) celebrar('cero', 1, null);
     } else tCero = null;
 
-    if (!REF || REF.hecho || REF.modo !== c.modo) return;
-    const otrosIguales = (REF.var === 'T' || REF.T === c.T) && (REF.var === 'N' || REF.N === c.N) && (REF.var === 'V' || REF.Vr === c.Vr);
-    if (!otrosIguales) return;
-    const ratio = { T: REF.T > 0 ? c.T / REF.T : 0, N: c.N / REF.N, V: c.Vr / REF.Vr }[REF.var];
-    const x = cerca(ratio, 2, 0.03) ? 2 : cerca(ratio, 0.5, 0.03) ? 0.5 : 0;
-    if (!x || !(REF.P > 0.02)) return;
-    const rP = G.presion / REF.P, rV = volLey / REF.V;
-    let ley = null;
-    if (REF.var === 'V' && c.modo === 'rigido' && cerca(rP * x, 1, 0.12)) ley = 'boyle';
-    if (REF.var === 'T' && c.modo === 'globo' && cerca(rV, x, 0.10)) ley = 'charles';
-    if (REF.var === 'T' && c.modo === 'rigido' && cerca(rP, x, 0.12)) ley = 'gayLussac';
-    if (REF.var === 'N' && c.modo === 'globo' && cerca(rV, x, 0.10)) ley = 'avogadro';
-    if (ley) { REF.hecho = true; celebrar(ley, x, REF); }
+    if (celebradoEn === clave) return;
+    const P = G.presion, V = volLey;
+    for (const r of fotos) {
+        if (r === foto || r.modo !== c.modo || r.n < 30 || !(r.P > 0.02)) continue;
+        const dif = ['T', 'N', 'V'].filter(k => (k === 'V' ? r.Vr !== c.Vr : r[k] !== c[k]));
+        if (dif.length !== 1) continue;
+        const v = dif[0];
+        const ratio = { T: r.T > 0 ? c.T / r.T : 0, N: r.N > 0 ? c.N / r.N : 0, V: c.Vr / r.Vr }[v];
+        const x = cerca(ratio, 2, TOL_MANDO) ? 2 : cerca(ratio, 0.5, TOL_MANDO) ? 0.5 : 0;
+        if (!x) continue;
+        const rP = P / r.P, rV = V / r.V;
+        let ley = null;
+        if (v === 'V' && c.modo === 'rigido' && cerca(rP * x, 1, TOL_MEDIDA)) ley = 'boyle';
+        if (v === 'T' && c.modo === 'globo' && cerca(rV, x, TOL_MEDIDA)) ley = 'charles';
+        if (v === 'T' && c.modo === 'rigido' && cerca(rP, x, TOL_MEDIDA)) ley = 'gayLussac';
+        if (v === 'N' && c.modo === 'globo' && cerca(rV, x, TOL_MEDIDA)) ley = 'avogadro';
+        if (ley) { celebradoEn = clave; celebrar(ley, x, r); return; }
+    }
 }
 function celebrar(ley, x, ref) {
     CELEB = { ley, x, ref: ref ? Object.assign({}, ref) : null, t0: millis(), P: G.presion, V: volSuave, T: G.T, N: G.N };
@@ -465,7 +481,7 @@ function estallar() {
     }
     const nodos = G.nodos.map(n => ({ x: n.x, y: n.y }));
     ESTALLIDO = { t0: millis(), g, trozos, nodos };
-    tSobrePresion = null; CELEB = null; REF = null; G.marcas = [];
+    tSobrePresion = null; CELEB = null; olvidarFotos(); G.marcas = [];
     document.body.classList.add('estallado');
     document.querySelectorAll('.mandos-gas input').forEach(el => { el.disabled = true; });
     const b = $('btn-globo-nuevo'); if (b) { b.hidden = false; setTimeout(() => b.focus({ preventScroll: true }), 1200); }
@@ -1007,7 +1023,7 @@ function elegirModo(m) {
     if (ESTALLIDO) reiniciar(G.T > 0 ? G.T : 273);
     if (m !== G.modo) {
         cambiarModo(m);
-        borrarGrafica(); REF = null; CELEB = null; tCambio = relojSim(); tMando = -1e9; tendencia = []; embolo = null; volSuave = volLey = G.area * LITROS_POR_PX2;
+        borrarGrafica(); olvidarFotos(); CELEB = null; tCambio = relojSim(); tMando = -1e9; tendencia = []; embolo = null; volSuave = volLey = G.area * LITROS_POR_PX2;
     }
     document.body.classList.toggle('modo-globo', m === 'globo');
     document.body.classList.toggle('modo-rigido', m === 'rigido');
@@ -1021,7 +1037,7 @@ function reiniciar(T = 273) {
     quitarEstallido();
     reiniciarFisica(T, 50);
     volSuave = volLey = G.area * LITROS_POR_PX2; embolo = null;
-    borrarGrafica(); REF = null; CELEB = null; tCambio = relojSim(); tMando = -1e9; tendencia = [];
+    borrarGrafica(); olvidarFotos(); CELEB = null; tCambio = relojSim(); tMando = -1e9; tendencia = [];
     if (G.pausa) alternarPausa();
     mostrarValores();
 }
@@ -1036,18 +1052,18 @@ function leerNumero(txt) { return parseFloat(String(txt).replace(',', '.').repla
 
 function setupControles() {
     const sT = $('sl-temp'), sN = $('sl-mol'), sV = $('sl-vol');
-    sT.addEventListener('input', () => { fijarTemperatura(+sT.value); notificarCambio('T'); mostrarValores(); });
-    sN.addEventListener('input', () => { fijarMoleculas(+sN.value); notificarCambio('N'); mostrarValores(); });
-    sV.addEventListener('input', () => { fijarVolumenRigido(+sV.value / 100); notificarCambio('V'); mostrarValores(); });
+    sT.addEventListener('input', () => { fijarTemperatura(+sT.value); notificarCambio(); mostrarValores(); });
+    sN.addEventListener('input', () => { fijarMoleculas(+sN.value); notificarCambio(); mostrarValores(); });
+    sV.addEventListener('input', () => { fijarVolumenRigido(+sV.value / 100); notificarCambio(); mostrarValores(); });
     const numero = (id, aplicar) => {
         const el = $(id);
         const hecho = () => { const v = leerNumero(el.value); if (isFinite(v)) aplicar(v); mostrarValores(); };
         el.addEventListener('change', hecho);
         el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { hecho(); el.blur(); } });
     };
-    numero('num-temp', (v) => { fijarTemperatura(unidadC ? v + 273 : v); notificarCambio('T'); });
-    numero('num-mol', (v) => { fijarMoleculas(v); notificarCambio('N'); });
-    numero('num-vol', (v) => { fijarVolumenRigido(v); notificarCambio('V'); });
+    numero('num-temp', (v) => { fijarTemperatura(unidadC ? v + 273 : v); notificarCambio(); });
+    numero('num-mol', (v) => { fijarMoleculas(v); notificarCambio(); });
+    numero('num-vol', (v) => { fijarVolumenRigido(v); notificarCambio(); });
     document.querySelectorAll('[data-unidad]').forEach(b => b.addEventListener('click', () => { unidadC = b.dataset.unidad === 'C'; mostrarValores(); }));
     document.querySelectorAll('[data-modo]').forEach(b => b.addEventListener('click', () => elegirModo(b.dataset.modo)));
     document.querySelectorAll('[data-ejes]').forEach(b => b.addEventListener('click', () => elegirEjes(b.dataset.ejes, true)));
@@ -1126,7 +1142,7 @@ function setup() {
         grafica:     (v) => { const e = ['1', 'si', 'sí', 'true'].includes(v) ? 'pv' : v; if (['pv', 'vt', 'pt'].includes(e)) elegirEjes(e, true); },
         retos:       (v) => { if (['1', 'si', 'sí', 'true'].includes(v)) abrirRetos(); },
     });
-    tCambio = relojSim(); REF = null;
+    tCambio = relojSim(); olvidarFotos();
     fitCanvas();
 }
 

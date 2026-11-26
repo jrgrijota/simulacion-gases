@@ -23,8 +23,8 @@ const NOMBRE_CORTO = { boyle: 'Boyle', charles: 'Charles', gayLussac: 'Gay-Lussa
 // Cada reto pide una ley concreta, en un sentido concreto (x: 2, 0.5 o cualquiera)
 const RETOS = [
     { ley: 'boyle',     x: 0.5,  txt: 'Reduce el volumen a la mitad sin cambiar la temperatura. ¿Y la presión?' },
-    { ley: 'charles',   x: 2,    txt: 'Haz que el globo doble su volumen sin meterle moléculas' },
-    { ley: 'gayLussac', x: 2,    txt: 'Duplica la presión del recipiente rígido sin mover el émbolo ni meter gas' },
+    { ley: 'charles',   x: 2,    txt: 'Haz que el globo doble su volumen sin meterle moléculas (pista: empieza a 250 K o menos)' },
+    { ley: 'gayLussac', x: 2,    txt: 'Duplica la presión del recipiente rígido sin mover el émbolo ni meter gas (pista: empieza a 250 K o menos)' },
     { ley: 'avogadro',  x: 2,    txt: 'Duplica el volumen del globo sin cambiar la temperatura' },
     { ley: 'cero',      x: null, txt: 'Lleva el gas a 0 K: ¿qué queda de la presión?' },
 ];
