@@ -125,20 +125,21 @@ const tempTxt = (T) => unidadC ? `${T - 273} °C` : `${T} K`;
 // ── Momento clave: las leyes de los gases ────────────────────────
 // Cada vez que el gas queda estable se guarda una «foto» (presión y volumen
 // medios mientras está estable). Al llegar a otro estado estable se compara
-// con todas las fotos del mismo recipiente: si solo ha cambiado un mando y ha
-// llegado al doble o a la mitad (aunque se haya pasado por valores
-// intermedios), se comprueba la ley y se celebra (sin interrumpir).
-// Así 200 K → 400 K cuenta aunque se haya empezado en 273 K.
+// con todas las fotos del mismo recipiente. Basta con que lo medido llegue al
+// doble o a la mitad, con margen, sin buscar valores exactos en los mandos:
+//  · Charles: globo, mismas moléculas; el volumen se duplica (o se reduce a la mitad).
+//  · Gay-Lussac: rígido, mismas moléculas y volumen; la presión se duplica (o a la mitad).
+//  · Avogadro: globo, misma temperatura; el volumen se duplica (o a la mitad).
+//  · Boyle: rígido, misma temperatura y moléculas; el volumen se duplica o se
+//    reduce a la mitad y la presión hace lo contrario.
 let tCambio = -1e9, CELEB = null, tCero = null;
 let fotos = [];                 // estados estables del recipiente actual
 let celebradoEn = null;         // mandos con los que ya se celebró (no repetir)
-const ESPERA = 4500;            // ms sin tocar nada para dar el gas por estable (la presión es media de 3 s)
-// El volumen del globo tiembla (pocas moléculas): para las leyes se usa una
-// media más larga (~3 s) y se espera algo más
-const ESPERA_GLOBO = 7000;
+const ESPERA = 3500;            // ms sin tocar nada para dar el gas por estable
+const ESPERA_GLOBO = 5000;      // el globo tarda algo más en crecer o encoger
 let volLey = null;
-// Márgenes: el mando, un 5 % del doble o la mitad; lo medido, un 18 %
-const TOL_MANDO = 0.05, TOL_MEDIDA = 0.18;
+// «Doble»: a partir de 1,8 veces (lo medido tiembla con pocas moléculas)
+const DOBLE = 1.8;
 
 // Reloj de la simulación en ms (por pasos): la espera no depende de los fps
 function relojSim() { return G.pasos * 1000 / 60; }
@@ -150,6 +151,8 @@ function notificarCambio() {
     tendencia = [];             // lo de antes de mover el mando no cuenta
 }
 function cerca(x, objetivo, tol) { return Math.abs(x / objetivo - 1) <= tol; }
+// 2 si a es el doble de b (o más), 0.5 si es la mitad (o menos); si no, 0
+function dobleOMitad(a, b) { if (!(a > 0 && b > 0)) return 0; const r = a / b; return r >= DOBLE ? 2 : r <= 1 / DOBLE ? 0.5 : 0; }
 
 function comprobarLeyes() {
     const ahora = relojSim();
@@ -159,7 +162,7 @@ function comprobarLeyes() {
 
     // Foto del estado actual: media de lo medido mientras sigue estable
     let foto = fotos.find(f => f.clave === clave);
-    if (!foto) { foto = Object.assign(c, { clave, P: 0, V: 0, n: 0, t: ahora }); fotos.push(foto); if (fotos.length > 40) fotos.shift(); }
+    if (!foto) { foto = Object.assign({}, c, { clave, P: 0, V: 0, n: 0, t: ahora }); fotos.push(foto); if (fotos.length > 60) fotos.shift(); }
     else if (foto.tCambio !== tCambio) { foto.P = foto.V = foto.n = 0; foto.t = ahora; }
     foto.tCambio = tCambio;
     foto.n++; foto.P += (G.presion - foto.P) / foto.n; foto.V += (volLey - foto.V) / foto.n;
@@ -170,23 +173,31 @@ function comprobarLeyes() {
         if (ahora - tCero > 1500 && !(CELEB && CELEB.ley === 'cero')) celebrar('cero', 1, null);
     } else tCero = null;
 
-    if (celebradoEn === clave) return;
+    if (celebradoEn === clave || G.T === 0 || G.N === 0) return;
     const P = G.presion, V = volLey;
+    let mejor = null;
     for (const r of fotos) {
-        if (r === foto || r.modo !== c.modo || r.n < 30 || !(r.P > 0.02)) continue;
-        const dif = ['T', 'N', 'V'].filter(k => (k === 'V' ? r.Vr !== c.Vr : r[k] !== c[k]));
-        if (dif.length !== 1) continue;
-        const v = dif[0];
-        const ratio = { T: r.T > 0 ? c.T / r.T : 0, N: r.N > 0 ? c.N / r.N : 0, V: c.Vr / r.Vr }[v];
-        const x = cerca(ratio, 2, TOL_MANDO) ? 2 : cerca(ratio, 0.5, TOL_MANDO) ? 0.5 : 0;
-        if (!x) continue;
-        const rP = P / r.P, rV = V / r.V;
-        let ley = null;
-        if (v === 'V' && c.modo === 'rigido' && cerca(rP * x, 1, TOL_MEDIDA)) ley = 'boyle';
-        if (v === 'T' && c.modo === 'globo' && cerca(rV, x, TOL_MEDIDA)) ley = 'charles';
-        if (v === 'T' && c.modo === 'rigido' && cerca(rP, x, TOL_MEDIDA)) ley = 'gayLussac';
-        if (v === 'N' && c.modo === 'globo' && cerca(rV, x, TOL_MEDIDA)) ley = 'avogadro';
-        if (ley) { celebradoEn = clave; celebrar(ley, x, r); return; }
+        if (r === foto || r.modo !== c.modo || r.n < 20 || r.T === 0 || r.N === 0) continue;
+        const mismaT = r.T === c.T, mismasN = r.N === c.N, mismoV = r.Vr === c.Vr;
+        let ley = null, k = 0;
+        if (c.modo === 'globo') {
+            k = V / r.V;
+            if (mismasN && !mismaT) ley = 'charles';
+            else if (mismaT && !mismasN) ley = 'avogadro';
+        } else if (mismaT && mismasN && !mismoV) {
+            k = c.Vr / r.Vr;
+            // la presión tiene que ir al revés que el volumen
+            if (!(dobleOMitad(P, r.P) && dobleOMitad(P, r.P) === dobleOMitad(r.Vr, c.Vr))) k = 0;
+            ley = 'boyle';
+        } else if (mismasN && mismoV && !mismaT) { k = P / r.P; ley = 'gayLussac'; }
+        if (!ley || !(k > 0) || !(r.V > 0.02 && r.P > 0.02) || !dobleOMitad(k, 1)) continue;
+        const lejos = Math.abs(Math.abs(Math.log2(k)) - 1);     // 0 = justo el doble o la mitad
+        if (!mejor || lejos < mejor.lejos) mejor = { ley, k, r, lejos };
+    }
+    if (mejor) {
+        // x: 2 o 0.5 si es cerca del doble o la mitad; si se pasa, 'mas' o 'menos'
+        const k = mejor.k, x = k >= DOBLE && k <= 2.4 ? 2 : k <= 1 / DOBLE && k >= 1 / 2.4 ? 0.5 : k > 1 ? 'mas' : 'menos';
+        celebradoEn = clave; celebrar(mejor.ley, x, mejor.r);
     }
 }
 function celebrar(ley, x, ref) {
@@ -196,11 +207,11 @@ function celebrar(ley, x, ref) {
 function celebrando() { return CELEB && millis() - CELEB.t0 < 6000 && (CELEB.ley !== 'cero' || G.T === 0); }
 
 const LEYES = {
-    boyle:     { nombre: 'LEY DE BOYLE', sub2: 'doble de volumen → mitad de presión', subMedio: 'mitad de volumen → doble de presión' },
-    charles:   { nombre: 'LEY DE CHARLES', sub2: 'doble de temperatura → doble de volumen', subMedio: 'mitad de temperatura → mitad de volumen' },
-    gayLussac: { nombre: 'LEY DE GAY-LUSSAC', sub2: 'doble de temperatura → doble de presión', subMedio: 'mitad de temperatura → mitad de presión' },
-    avogadro:  { nombre: 'LEY DE AVOGADRO', sub2: 'doble de moléculas → doble de volumen', subMedio: 'mitad de moléculas → mitad de volumen' },
-    cero:      { nombre: 'CERO ABSOLUTO', sub2: 'sin movimiento, sin presión', subMedio: 'sin movimiento, sin presión' },
+    boyle:     { nombre: 'LEY DE BOYLE', sub2: 'doble de volumen → mitad de presión', subMedio: 'mitad de volumen → doble de presión', formula: 'P · V = constante' },
+    charles:   { nombre: 'LEY DE CHARLES', sub2: 'doble de temperatura → doble de volumen', subMedio: 'mitad de temperatura → mitad de volumen', formula: 'V / T = constante' },
+    gayLussac: { nombre: 'LEY DE GAY-LUSSAC', sub2: 'doble de temperatura → doble de presión', subMedio: 'mitad de temperatura → mitad de presión', formula: 'P / T = constante' },
+    avogadro:  { nombre: 'LEY DE AVOGADRO', sub2: 'doble de moléculas → doble de volumen', subMedio: 'mitad de moléculas → mitad de volumen', formula: 'V / N = constante' },
+    cero:      { nombre: 'CERO ABSOLUTO', sub2: 'sin movimiento, sin presión', subMedio: 'sin movimiento, sin presión', formula: 'sin movimiento, sin presión' },
 };
 
 // ── Mensaje del panel de estado ──────────────────────────────────
@@ -244,7 +255,13 @@ function mensaje() {
     if (G.pausa) return { tag: i18n.t('EN PAUSA'), col: COLS.dim, txt: i18n.t('Todo está quieto para que lo mires con calma: cuenta las moléculas o mira cómo se reparten. Entre ellas no hay nada, ni siquiera aire.') };
     if (celebrando()) {
         const c = CELEB, dobla = c.x === 2;
-        const txt = {
+        const general = {   // cambio mayor que el doble o la mitad
+            boyle: 'A la misma temperatura, la presión cambia al revés que el volumen: si uno se multiplica, la otra se divide por el mismo número.',
+            charles: 'Con las mismas moléculas, el volumen del globo cambia en la misma proporción que la temperatura (en kelvin), y la presión vuelve a 1 atm.',
+            gayLussac: 'Sin cambiar el volumen, la presión cambia en la misma proporción que la temperatura (en kelvin).',
+            avogadro: 'A la misma temperatura, el volumen del globo cambia en la misma proporción que el número de moléculas.',
+        };
+        const txt = (c.x === 'mas' || c.x === 'menos') && general[c.ley] ? general[c.ley] : {
             boyle: dobla ? 'Volumen doble y la misma temperatura: las moléculas tardan más en llegar a la pared, chocan la mitad de veces y la presión baja a la mitad.'
                          : 'Volumen a la mitad y la misma temperatura: las moléculas llegan antes a la pared, chocan el doble de veces y la presión se duplica.',
             charles: dobla ? 'Temperatura doble (en kelvin): las moléculas van más deprisa y empujan más. El globo crece hasta el doble de volumen y la presión vuelve a 1 atm.'
@@ -317,7 +334,7 @@ function drawEscena() {
     anunciar(m);
     drawGrafica();
     if (celebrando()) {
-        const L = LEYES[CELEB.ley], sub = i18n.t(CELEB.x === 2 ? L.sub2 : L.subMedio);
+        const L = LEYES[CELEB.ley], sub = i18n.t(CELEB.x === 2 ? L.sub2 : CELEB.x === 0.5 ? L.subMedio : L.formula);
         if (ESC_MOVIL) sello(i18n.t(L.nombre), sub, GRAPH.x + GRAPH.w - 128, GRAPH.y + 92, CELEB.t0, true);
         else sello(i18n.t(L.nombre), sub, 1072, 604, CELEB.t0, false);
     }
@@ -427,7 +444,9 @@ function sondaYCable(xS, yIni, yPunta, cable) {
 function pastillaCambio() {
     if (!celebrando() || CELEB.ley === 'cero') return null;
     // Lo que cambia como efecto: en Boyle, la presión va al revés que el volumen
-    const dobla = CELEB.ley === 'boyle' ? CELEB.x !== 2 : CELEB.x === 2;
+    const x = CELEB.x, crece = x === 2 || x === 'mas', exacto = x === 2 || x === 0.5;
+    const dobla = CELEB.ley === 'boyle' ? !crece : crece;
+    if (!exacto) return i18n.t(dobla ? '¡más del doble!' : '¡menos de la mitad!');
     return i18n.t(dobla ? '¡el doble!' : '¡la mitad!');
 }
 
