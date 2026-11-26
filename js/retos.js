@@ -20,11 +20,11 @@ const ALBUM_LEYES = [
 ];
 const NOMBRE_CORTO = { boyle: 'Boyle', charles: 'Charles', gayLussac: 'Gay-Lussac', avogadro: 'Avogadro', cero: '0 K' };
 
-// Cada reto pide una ley concreta, en un sentido concreto (x: 2, 0.5 o cualquiera)
+// Cada reto pide una ley concreta; cuenta en los dos sentidos (doble o mitad)
 const RETOS = [
     { ley: 'boyle',     x: 0.5,  txt: 'Reduce el volumen a la mitad sin cambiar la temperatura. ¿Y la presión?' },
-    { ley: 'charles',   x: 2,    txt: 'Haz que el globo doble su volumen sin meterle moléculas (pista: empieza a 250 K o menos)' },
-    { ley: 'gayLussac', x: 2,    txt: 'Duplica la presión del recipiente rígido sin mover el émbolo ni meter gas (pista: empieza a 250 K o menos)' },
+    { ley: 'charles',   x: 2,    txt: 'Haz que el globo doble su volumen sin meterle moléculas (pista: enfría mucho el gas y luego caliéntalo)' },
+    { ley: 'gayLussac', x: 2,    txt: 'Duplica la presión del recipiente rígido sin mover el émbolo ni meter gas (pista: enfría mucho el gas y luego caliéntalo)' },
     { ley: 'avogadro',  x: 2,    txt: 'Duplica el volumen del globo sin cambiar la temperatura' },
     { ley: 'cero',      x: null, txt: 'Lleva el gas a 0 K: ¿qué queda de la presión?' },
 ];
@@ -38,7 +38,7 @@ function retosGanar(ley, x) {
     let cambio = false;
     if (!retosDatos.sellos[ley]) { retosDatos.sellos[ley] = true; cambio = true; }
     RETOS.forEach((r, i) => {
-        if (r.ley === ley && (r.x == null || r.x === x) && !retosDatos.retos[i]) { retosDatos.retos[i] = true; cambio = true; }
+        if (r.ley === ley && !retosDatos.retos[i]) { retosDatos.retos[i] = true; cambio = true; }
     });
     if (cambio) { ALMACEN.guardar(retosDatos); pintarRetos(); }
 }
